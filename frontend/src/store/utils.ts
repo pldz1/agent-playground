@@ -1,0 +1,143 @@
+import { ModelConfig, ModelCapabilities, AppSettings } from "../types";
+
+export const SESSIONS_KEY = "ai_agent_sessions";
+export const SETTINGS_KEY = "ai_agent_settings";
+
+export const DEFAULT_CAPABILITIES: ModelCapabilities = {
+  vision: false,
+  webSearch: false,
+  reasoning: false,
+  imageGeneration: false,
+};
+
+export const defaultSettings: AppSettings = {
+  debugMode: false,
+  exportFormat: "json",
+  routingModel: "",
+  reasoningModel: "",
+  chatModel: "",
+  models: [],
+};
+
+export const cloneModel = (model: ModelConfig): ModelConfig => ({
+  ...model,
+  capabilities: { ...model.capabilities },
+});
+
+export const ensureUniqueId = (
+  preferredId: string,
+  used: Set<string>,
+  fallbackIndex: number
+): string => {
+  const base = preferredId.trim() || `model-${fallbackIndex + 1}`;
+  let candidate = base;
+  let attempt = 1;
+  while (!candidate || used.has(candidate)) {
+    candidate = `${base}-${attempt++}`;
+  }
+  used.add(candidate);
+  return candidate;
+};
+
+export const normalizeCapabilities = (value: unknown): ModelCapabilities => ({
+  vision: Boolean((value as ModelCapabilities | undefined)?.vision),
+  webSearch: Boolean((value as ModelCapabilities | undefined)?.webSearch),
+  reasoning: Boolean((value as ModelCapabilities | undefined)?.reasoning),
+  imageGeneration: Boolean(
+    (value as ModelCapabilities | undefined)?.imageGeneration
+  ),
+});
+
+export const normalizeModel = (
+  model: unknown,
+  used: Set<string>,
+  index: number
+): ModelConfig | null => {
+  if (model == null) return null;
+
+  if (typeof model === "string") {
+    const name = model.trim();
+    if (!name) return null;
+    const id = ensureUniqueId(name, used, index);
+    return {
+      id,
+      name,
+      provider: "",
+      baseUrl: "",
+      apiKey: "",
+      capabilities: { ...DEFAULT_CAPABILITIES },
+    };
+  }
+
+  if (typeof model === "object") {
+    const source = model as Partial<ModelConfig> & Record<string, unknown>;
+    const rawName = typeof source.name === "string" ? source.name.trim() : "";
+    const rawId = typeof source.id === "string" ? source.id.trim() : "";
+    const id = ensureUniqueId(rawId || rawName, used, index);
+    const name = rawName || id;
+    const provider =
+      typeof source.provider === "string" ? source.provider.trim() : "";
+    const baseUrl =
+      typeof source.baseUrl === "string" ? source.baseUrl.trim() : "";
+    const apiKey =
+      typeof source.apiKey === "string" ? source.apiKey.trim() : "";
+
+    return {
+      id,
+      name,
+      provider,
+      baseUrl,
+      apiKey,
+      capabilities: normalizeCapabilities(source.capabilities),
+    };
+  }
+
+  return null;
+};
+
+export const normalizeModels = (
+  input: unknown,
+  fallback: ModelConfig[]
+): ModelConfig[] => {
+  if (!Array.isArray(input)) return fallback.map(cloneModel);
+
+  const usedIds = new Set<string>();
+  const normalized = input
+    .map((model, index) => normalizeModel(model, usedIds, index))
+    .filter((model): model is ModelConfig => Boolean(model));
+
+  return normalized.length > 0 ? normalized : fallback.map(cloneModel);
+};
+
+export const normalizeSettings = (
+  raw: unknown,
+  base: AppSettings
+): AppSettings => {
+  const source = (
+    typeof raw === "object" && raw !== null ? raw : {}
+  ) as Partial<AppSettings> & { availableModels?: unknown };
+
+  const models = normalizeModels(
+    source.models ?? source.availableModels,
+    base.models
+  );
+  const fallbackModelId = models[0]?.id ?? "";
+
+  const pickModel = (value: unknown, defaultValue: string): string => {
+    const candidate = typeof value === "string" ? value.trim() : "";
+    if (candidate && models.some((model) => model.id === candidate))
+      return candidate;
+    if (models.some((model) => model.id === defaultValue)) return defaultValue;
+    return fallbackModelId;
+  };
+
+  return {
+    debugMode: Boolean(source.debugMode ?? base.debugMode),
+    exportFormat:
+      source.exportFormat === "markdown" ? "markdown" : base.exportFormat,
+    routingModel: pickModel(source.routingModel, base.routingModel),
+    reasoningModel: pickModel(source.reasoningModel, base.reasoningModel),
+    chatModel: pickModel(source.chatModel, base.chatModel),
+    models,
+  };
+};
