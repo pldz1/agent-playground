@@ -18,8 +18,10 @@ export interface AppSettings {
   debugMode: boolean;
   exportFormat: "json" | "markdown";
   routingModel: string;
-  reasoningModel: string;
   chatModel: string;
+  webSearchModel: string;
+  reasoningModel: string;
+  imageGenerationModel: string;
   models: ModelConfig[];
 }
 
