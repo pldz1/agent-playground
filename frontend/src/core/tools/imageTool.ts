@@ -49,6 +49,7 @@ export class ImageTool {
     model?: string;
   }) {
     const auth = resolveAuth("image");
+    auth.apiVersion = auth.apiVersion || "2025-04-01-preview";
     const modelName = model ?? auth.modelName;
 
     if (!auth.apiKey || !auth.baseUrl) {

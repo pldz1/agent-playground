@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Sidebar } from "./components/sidebar";
-import { ChatsPage } from "./pages/chat-page";
+import { ChatsPage } from "./pages/chats-page";
 import { SettingsPage } from "./pages/settings-page";
 import { Toaster } from "./components/ui/sonner";
 

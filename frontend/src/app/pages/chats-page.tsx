@@ -12,15 +12,7 @@ import { MessageCard } from '../components/message-card';
 import { Composer } from '../components/composer';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { cn } from '../components/ui/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -39,18 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-import {
-  Plus,
-  Trash2,
-  Search,
-  Download,
-  FileJson,
-  FileText,
-  Pencil,
-  PanelLeftOpen,
-  PanelLeftClose,
-} from 'lucide-react';
+import { PanelLeftOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import { ChatSidebar } from './chats/chat-sidebar';
+import { ConfigStatusBanner } from './chats/config-status-banner';
+import { EmptyMessagesPlaceholder } from './chats/empty-messages-placeholder';
+import { ChatWelcomePanel } from './chats/chat-welcome-panel';
 
 interface ChatsPageProps {
   debugMode: boolean;
@@ -61,14 +47,6 @@ interface ChatsPageProps {
 
 const DEFAULT_PLACEHOLDER = 'Enter your question to start... (Press Enter to send / Shift+Enter to newline)';
 const CONFIG_PLACEHOLDER = 'Please complete the model configuration before starting the conversation';
-const CONFIG_BANNER_TEXT = 'The AI ​​model configuration is not yet complete, unable to respond to messages.';
-
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 const makeId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -378,149 +356,21 @@ export function ChatsPage({
   return (
     <div className="h-full flex bg-slate-50 dark:bg-slate-950 relative">
       {isSidebarVisible && (
-        <div className="w-96 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
-          <div className="p-5 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Recent chats
-                </h2>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  onClick={() => handleCreateSession()}
-                  disabled={newSessionDisabled}
-                  className="bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
-                >
-                  <Plus className="size-4 mr-2" />
-                  New chat
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  aria-label="Hide chat list"
-                >
-                  <PanelLeftClose className="size-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <Input
-                placeholder="Search chats..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1 p-5">
-            {sessions.length === 0 ? (
-              <Card className="p-5 text-center space-y-3">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-                  No chat yet.
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Click the "New chat" button to create the first.
-                </p>
-              </Card>
-            ) : filteredSessions.length === 0 ? (
-              <Card className="p-5 text-center space-y-2">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-                  No chat found
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Try adjusting your search keywords.
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {filteredSessions.map((session) => (
-                  <Card
-                    key={session.id}
-                    className={cn(
-                      'p-4 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-900',
-                      currentSessionId === session.id
-                        ? 'border-indigo-500 bg-slate-50 dark:bg-slate-900'
-                        : '',
-                    )}
-                    onClick={() => handleSelectSession(session.id)}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
-                          {session.title || '新对话'}
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Last updated: {timeFormatter.format(session.updatedAt)}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {session.messages.length} messages
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <Download className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleExportJSON(session);
-                              }}
-                            >
-                              <FileJson className="size-4 mr-2" />
-                              Export JSON
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleExportMarkdown(session);
-                              }}
-                            >
-                              <FileText className="size-4 mr-2" />
-                              Export Markdown
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            startRenameSession(session);
-                          }}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setSessionToDelete(session);
-                          }}
-                        >
-                          <Trash2 className="size-4 text-red-600 dark:text-red-400" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </div>
+        <ChatSidebar
+          sessions={sessions}
+          filteredSessions={filteredSessions}
+          currentSessionId={currentSessionId}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+          onCreateSession={handleCreateSession}
+          onToggleSidebar={toggleSidebar}
+          onSelectSession={handleSelectSession}
+          onExportJSON={handleExportJSON}
+          onExportMarkdown={handleExportMarkdown}
+          onRenameSession={startRenameSession}
+          onDeleteSession={(session) => setSessionToDelete(session)}
+          newSessionDisabled={newSessionDisabled}
+        />
       )}
       {!isSidebarVisible && (
         <Button
@@ -537,7 +387,6 @@ export function ChatsPage({
       <div className="flex-1 flex flex-col">
         {currentSession ? (
           <>
-
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
@@ -557,16 +406,7 @@ export function ChatsPage({
                       />
                     ))
                   ) : (
-                    <div className="flex items-center justify-center py-20">
-                      <Card className="max-w-xl w-full p-8 text-center space-y-4">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Ready to start a new chat.
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          Enter your question or drag and drop an image into the input box. The agent will display the reasoning process and answer here.
-                        </p>
-                      </Card>
-                    </div>
+                    <EmptyMessagesPlaceholder />
                   )}
                 </div>
               </ScrollArea>
@@ -589,22 +429,10 @@ export function ChatsPage({
                 />
               </div>
             )}
-            <Card className="max-w-lg w-full p-8 text-center space-y-4">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                Welcome Agent Playground
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                You haven't created any conversations yet. Click the button below to get started quickly.
-              </p>
-              <Button
-                onClick={() => handleCreateSession()}
-                disabled={newSessionDisabled}
-                className="bg-[#4F46E5] hover:bg-[#4338CA] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
-              >
-                <Plus className="size-4 mr-2" />
-                Create New Chat
-              </Button>
-            </Card>
+            <ChatWelcomePanel
+              onCreateSession={handleCreateSession}
+              disabled={newSessionDisabled}
+            />
           </div>
         )}
       </div>
@@ -660,39 +488,6 @@ export function ChatsPage({
           </form>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-interface ConfigStatusBannerProps {
-  showDebug: boolean;
-  debugLines: string[];
-  onNavigate: () => void;
-}
-
-function ConfigStatusBanner({ showDebug, debugLines, onNavigate }: ConfigStatusBannerProps) {
-  return (
-    <div className="rounded-lg border border-[#F2C166]/60 bg-[#FFF7E6] px-4 py-3 text-[#8B5E21] shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <p className="text-sm font-medium">{CONFIG_BANNER_TEXT}</p>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          className="bg-[#4F46E5] text-white hover:bg-[#4338CA]"
-          onClick={onNavigate}
-        >
-          Go to Models settings
-        </Button>
-      </div>
-      {showDebug && debugLines.length > 0 && (
-        <div className="mt-3 rounded-md border border-dashed border-[#E2B367] bg-white/60 px-3 py-2">
-          <pre className="whitespace-pre-wrap text-xs font-mono leading-5 text-slate-600">
-            {debugLines.join('\n')}
-          </pre>
-        </div>
-      )}
     </div>
   );
 }

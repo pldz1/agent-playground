@@ -5,7 +5,7 @@ import type {
   PlanStep,
   ToolName,
   ToolOutput,
-} from "../types/agent";
+} from "@/types";
 
 import { route } from "./router";
 import { Executor } from "./executor";
