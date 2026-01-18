@@ -61,17 +61,17 @@ export async function route({
 
   const auth = resolveAuth("router");
   const client = getOpenAIClient(auth);
-  const modelId = auth.modelId;
+  const modelName = auth.modelName;
   const started = now();
 
   logger.debug("Router.route:start", {
-    modelId,
+    modelName,
     provider: auth.model.provider,
   });
 
   try {
     const completion = await client.agent.completions.create({
-      model: modelId,
+      model: modelName,
       temperature: 0,
       messages: [
         { role: "system", content: routerPrompt },
@@ -82,7 +82,7 @@ export async function route({
 
     const duration = Math.round(now() - started);
     logger.debug("Router.route:success", {
-      modelId,
+      modelName,
       durationMs: duration,
     });
 
@@ -93,12 +93,12 @@ export async function route({
     return {
       intents,
       raw: parsed,
-      model: modelId,
+      model: modelName,
       mocked: false,
     };
   } catch (error) {
     logger.error("Router.route:error", {
-      modelId,
+      modelName,
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;

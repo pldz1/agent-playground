@@ -28,7 +28,7 @@ function ensureAuth(auth: RuntimeAuthConfig) {
     if (!auth.apiKey) missing.push("API key");
     if (!auth.baseUrl) missing.push("base URL");
     throw new Error(
-      `Missing ${missing.join(" and ")} for model "${auth.modelId}". ` +
+      `Missing ${missing.join(" and ")} for model "${auth.modelName}". ` +
         `Please configure it in Settings > Models.`
     );
   }
@@ -44,7 +44,7 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
 
     const started = now();
     logger.debug(`${auth.role} → POST ${path}`, {
-      modelId: auth.modelId,
+      modelName: auth.modelName,
       provider: auth.model.provider,
       url,
     });

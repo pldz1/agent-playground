@@ -9,24 +9,24 @@ export class WebSearchTool {
   async search({ model, input }: { model?: string; input: string }) {
     const auth = resolveAuth("reasoning");
     const client = getOpenAIClient(auth);
-    const modelId = model ?? auth.modelId;
+    const modelName = model ?? auth.modelName;
     const started = now();
 
     logger.debug("WebSearchTool.search:start", {
-      modelId,
+      modelName,
       provider: auth.model.provider,
     });
 
     try {
       const response = await client.responses.create({
-        model: modelId,
+        model: modelName,
         tools: [{ type: "web_search_preview" }],
         input,
       });
 
       const duration = Math.round(now() - started);
       logger.debug("WebSearchTool.search:success", {
-        modelId,
+        modelName,
         durationMs: duration,
       });
 
@@ -39,7 +39,7 @@ export class WebSearchTool {
       };
     } catch (error) {
       logger.error("WebSearchTool.search:error", {
-        modelId,
+        modelName,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

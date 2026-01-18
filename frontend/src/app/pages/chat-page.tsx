@@ -139,7 +139,7 @@ export function ChatsPage({
   const debugLines = useMemo(() => {
     return configIssues.map((issue) => {
       const details: string[] = [];
-      if (!issue.modelId || !issue.modelName) {
+      if (!issue.modelLabel || !issue.modelName) {
         details.push('No model selected.');
       }
       if (issue.missingApiKey) {
@@ -148,9 +148,9 @@ export function ChatsPage({
       if (issue.missingBaseUrl) {
         details.push('Lack Base URL');
       }
-      const target = issue.modelName ?? issue.modelId ?? '';
+      const target = issue.modelName ?? issue.modelLabel ?? '';
       const suffix = target ? `（${target}）` : '';
-      return `${issue.label}${suffix}：${details.join('，') || 'Configuration missing'}`;
+      return `${issue.roleLabel}${suffix}：${details.join('，') || 'Configuration missing'}`;
     });
   }, [configIssues]);
 

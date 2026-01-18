@@ -14,14 +14,14 @@ function buildImageEndpoint(
   authBaseUrl: string,
   apiVersion: string,
   apiKey: string,
-  modelId: string
+  modelName: string
 ): ImageAuthHeaders {
   const base = authBaseUrl.replace(/\/+$/, "");
   const isAzure = /azure\.com/i.test(base) || /openai\.azure/i.test(base);
 
   if (isAzure) {
     return {
-      url: `${base}/openai/deployments/${modelId}/images/generations?api-version=${apiVersion}`,
+      url: `${base}/openai/deployments/${modelName}/images/generations?api-version=${apiVersion}`,
       headers: {
         "Api-Key": apiKey,
         "Content-Type": "application/json",
@@ -49,11 +49,11 @@ export class ImageTool {
     model?: string;
   }) {
     const auth = resolveAuth("image");
-    const modelId = model ?? auth.modelId;
+    const modelName = model ?? auth.modelName;
 
     if (!auth.apiKey || !auth.baseUrl) {
       logger.error("ImageTool.generate:missing-config", {
-        modelId,
+        modelName,
       });
       throw new Error(
         "Image generation is not configured. Please set Base URL and API Key for the image model."
@@ -64,7 +64,7 @@ export class ImageTool {
       auth.baseUrl,
       auth.apiVersion,
       auth.apiKey,
-      modelId
+      modelName
     );
     const body = {
       prompt,
@@ -76,7 +76,7 @@ export class ImageTool {
 
     const started = now();
     logger.debug("ImageTool.generate:start", {
-      modelId,
+      modelName,
       provider: auth.model.provider,
       url,
     });
@@ -87,7 +87,7 @@ export class ImageTool {
       body: JSON.stringify(body),
     }).catch((error) => {
       logger.error("ImageTool.generate:request-error", {
-        modelId,
+        modelName,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
@@ -98,7 +98,7 @@ export class ImageTool {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       logger.error("ImageTool.generate:failed", {
-        modelId,
+        modelName,
         status: res.status,
         body: text,
         durationMs: duration,
@@ -107,7 +107,7 @@ export class ImageTool {
     }
 
     logger.debug("ImageTool.generate:success", {
-      modelId,
+      modelName,
       durationMs: duration,
     });
 
@@ -134,7 +134,7 @@ export class ImageTool {
 
     const auth = resolveAuth("image");
     const client = getOpenAIClient(auth);
-    const modelId = model ?? auth.modelId;
+    const modelName = model ?? auth.modelName;
     const started = now();
 
     const imageUrl = image.url
@@ -148,13 +148,13 @@ export class ImageTool {
     }
 
     logger.debug("ImageTool.understand:start", {
-      modelId,
+      modelName,
       provider: auth.model.provider,
     });
 
     try {
       const completion = await client.agent.completions.create({
-        model: modelId,
+        model: modelName,
         messages: [
           {
             role: "user",
@@ -168,7 +168,7 @@ export class ImageTool {
 
       const duration = Math.round(now() - started);
       logger.debug("ImageTool.understand:success", {
-        modelId,
+        modelName,
         durationMs: duration,
       });
 
@@ -179,7 +179,7 @@ export class ImageTool {
       };
     } catch (error) {
       logger.error("ImageTool.understand:error", {
-        modelId,
+        modelName,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

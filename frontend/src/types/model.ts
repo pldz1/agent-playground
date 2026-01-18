@@ -6,7 +6,7 @@ export interface ModelCapabilities {
 }
 
 export interface ModelConfig {
-  id: string;
+  label: string;
   name: string;
   provider: string;
   baseUrl: string;
@@ -29,8 +29,8 @@ export type ModelRole = "chat" | "reasoning" | "router";
 
 export interface ModelConfigIssue {
   role: ModelRole;
-  label: string;
-  modelId: string | null;
+  roleLabel: string;
+  modelLabel: string | null;
   modelName: string | null;
   missingApiKey: boolean;
   missingBaseUrl: boolean;

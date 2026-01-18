@@ -21,11 +21,11 @@ export class ChatTool {
   }) {
     const auth = resolveAuth("chat");
     const client = getOpenAIClient(auth);
-    const modelId = model ?? auth.modelId;
+    const modelName = model ?? auth.modelName;
     const started = now();
 
     logger.debug("ChatTool.reply:start", {
-      modelId,
+      modelName,
       provider: auth.model.provider,
     });
 
@@ -45,12 +45,12 @@ export class ChatTool {
     try {
       const completion = await client.agent.completions.create({
         messages,
-        model: modelId,
+        model: modelName,
       });
 
       const duration = Math.round(now() - started);
       logger.debug("ChatTool.reply:success", {
-        modelId,
+        modelName,
         durationMs: duration,
       });
 
@@ -61,7 +61,7 @@ export class ChatTool {
       };
     } catch (error) {
       logger.error("ChatTool.reply:error", {
-        modelId,
+        modelName,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

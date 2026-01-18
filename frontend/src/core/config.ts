@@ -4,7 +4,7 @@ import { getSettings, defaultSettings } from "@/store";
 export type ModelRole = "chat" | "reasoning" | "router" | "image";
 
 export interface RuntimeModel {
-  id: string;
+  label: string;
   name: string;
   provider: string;
   baseUrl: string;
@@ -13,7 +13,7 @@ export interface RuntimeModel {
 
 export interface RuntimeAuthConfig {
   role: ModelRole;
-  modelId: string;
+  modelName: string;
   model: RuntimeModel;
   apiKey: string;
   baseUrl: string;
@@ -21,7 +21,7 @@ export interface RuntimeAuthConfig {
 }
 
 const EMPTY_MODEL: ModelConfig = {
-  id: "",
+  label: "",
   name: "",
   provider: "",
   baseUrl: "",
@@ -42,7 +42,7 @@ function safeGetSettings(): AppSettings {
   }
 }
 
-function selectModelId(settings: AppSettings, role: ModelRole): string {
+function selectModelName(settings: AppSettings, role: ModelRole): string {
   switch (role) {
     case "chat":
       return settings.chatModel;
@@ -51,22 +51,22 @@ function selectModelId(settings: AppSettings, role: ModelRole): string {
     case "router":
       return settings.routingModel;
     case "image":
-      return (
-        settings.models.find((model) => model.capabilities.imageGeneration)
-          ?.id ?? settings.chatModel
-      );
+      return settings.imageGenerationModel;
     default:
       return settings.chatModel;
   }
 }
 
-function findModel(settings: AppSettings, id: string): ModelConfig | undefined {
-  if (!id) return undefined;
-  return settings.models.find((model) => model.id === id);
+function findModel(
+  settings: AppSettings,
+  label: string
+): ModelConfig | undefined {
+  if (!label) return undefined;
+  return settings.models.find((model) => model.label === label);
 }
 
 function fallbackModel(role: ModelRole): ModelConfig | null {
-  const fallbackId = selectModelId(defaultSettings, role);
+  const fallbackId = selectModelName(defaultSettings, role);
   return (
     findModel(defaultSettings, fallbackId) ?? defaultSettings.models[0] ?? null
   );
@@ -74,7 +74,7 @@ function fallbackModel(role: ModelRole): ModelConfig | null {
 
 function toRuntimeModel(model: ModelConfig): RuntimeModel {
   return {
-    id: model.id,
+    label: model.label,
     name: model.name,
     provider: model.provider,
     baseUrl: model.baseUrl,
@@ -83,29 +83,29 @@ function toRuntimeModel(model: ModelConfig): RuntimeModel {
 }
 
 export function resolveModel(role: ModelRole): {
-  modelId: string;
+  modelName: string;
   model: RuntimeModel;
   settings: AppSettings;
 } {
   const settings = safeGetSettings();
-  const selectedId = selectModelId(settings, role);
+  const selectedId = selectModelName(settings, role);
   const match = findModel(settings, selectedId);
   const target = match ?? fallbackModel(role) ?? EMPTY_MODEL;
   return {
-    modelId: target.id,
+    modelName: target.name,
     model: toRuntimeModel(target),
     settings,
   };
 }
 
 export function resolveAuth(role: ModelRole): RuntimeAuthConfig {
-  const { modelId, model } = resolveModel(role);
+  const { modelName, model } = resolveModel(role);
   const baseUrl = normalizeBaseUrl(model.baseUrl || "");
   const apiKey = model.apiKey || "";
 
   return {
     role,
-    modelId,
+    modelName,
     model,
     apiKey,
     baseUrl,

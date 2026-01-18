@@ -3,7 +3,8 @@ import { logger } from "../logger";
 import { reasoningPrompt } from "../prompts/reasoningPrompt";
 import { getOpenAIClient } from "./openaiClient";
 
-const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+const now = () =>
+  typeof performance !== "undefined" ? performance.now() : Date.now();
 
 export class ReasoningTool {
   async think({
@@ -17,11 +18,11 @@ export class ReasoningTool {
   }) {
     const auth = resolveAuth("reasoning");
     const client = getOpenAIClient(auth);
-    const modelId = model ?? auth.modelId;
+    const modelName = model ?? auth.modelName;
     const started = now();
 
     logger.debug("ReasoningTool.think:start", {
-      modelId,
+      modelName,
       provider: auth.model.provider,
     });
 
@@ -31,16 +32,18 @@ export class ReasoningTool {
           { role: "system", content: reasoningPrompt },
           {
             role: "user",
-            content: `user: ${input}\ncontext: ${context ? JSON.stringify(context) : "null"}`,
+            content: `user: ${input}\ncontext: ${
+              context ? JSON.stringify(context) : "null"
+            }`,
           },
         ],
-        model: modelId,
+        model: modelName,
         reasoning_effort: "medium",
       });
 
       const duration = Math.round(now() - started);
       logger.debug("ReasoningTool.think:success", {
-        modelId,
+        modelName,
         durationMs: duration,
       });
 
@@ -51,7 +54,7 @@ export class ReasoningTool {
       };
     } catch (error) {
       logger.error("ReasoningTool.think:error", {
-        modelId,
+        modelName,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

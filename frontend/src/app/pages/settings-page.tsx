@@ -68,7 +68,6 @@ import {
   Power,
   Server,
   Sparkles,
-  TestTubeDiagonal,
   Trash2,
   Moon,
   Sun,
@@ -79,13 +78,17 @@ import { clearAllSessions, getSettings, saveSettings } from "@/store";
 import type { AppSettings, ModelCapabilities, ModelConfig } from "@/types";
 import { copyToClipboard } from "../helpers/export";
 
-type ModelSettingKey = "routingModel" | "chatModel" | "webSearchModel" | "reasoningModel" | "imageGenerationModel";
+type ModelSettingKey =
+  | "routingModel"
+  | "chatModel"
+  | "webSearchModel"
+  | "reasoningModel"
+  | "imageGenerationModel";
 
 const MODEL_SELECT_COPY: Record<
   ModelSettingKey,
   { label: string; description: string }
 > = {
-
   routingModel: {
     label: "Routing Model",
     description:
@@ -107,7 +110,6 @@ const MODEL_SELECT_COPY: Record<
     label: "Image Generation Model",
     description: "Generates images from textual descriptions.",
   },
-
 };
 
 const MODEL_CAPABILITY_REQUIREMENTS: Partial<
@@ -124,31 +126,31 @@ const CAPABILITY_METADATA: Array<{
   description: string;
   icon: ComponentType<{ className?: string }>;
 }> = [
-    {
-      key: "vision",
-      label: "Vision",
-      description: "Understands and reasons over images.",
-      icon: Eye,
-    },
-    {
-      key: "webSearch",
-      label: "Web Search",
-      description: "Can issue web or tool search calls.",
-      icon: Globe2,
-    },
-    {
-      key: "reasoning",
-      label: "Reasoning",
-      description: "Supports extended reasoning budgets.",
-      icon: Brain,
-    },
-    {
-      key: "imageGeneration",
-      label: "Image Generation",
-      description: "Creates images from textual prompts.",
-      icon: ImageIcon,
-    },
-  ];
+  {
+    key: "vision",
+    label: "Vision",
+    description: "Understands and reasons over images.",
+    icon: Eye,
+  },
+  {
+    key: "webSearch",
+    label: "Web Search",
+    description: "Can issue web or tool search calls.",
+    icon: Globe2,
+  },
+  {
+    key: "reasoning",
+    label: "Reasoning",
+    description: "Supports extended reasoning budgets.",
+    icon: Brain,
+  },
+  {
+    key: "imageGeneration",
+    label: "Image Generation",
+    description: "Creates images from textual prompts.",
+    icon: ImageIcon,
+  },
+];
 
 type ProviderOptionId =
   | "openai"
@@ -221,7 +223,7 @@ const getCapabilityLabel = (capability: CapabilityKey) =>
   capability;
 
 interface ModelFormState {
-  id: string;
+  label: string;
   name: string;
   providerPreset: ProviderOptionId;
   provider: string;
@@ -238,7 +240,7 @@ const EMPTY_CAPABILITIES = (): ModelCapabilities => ({
 });
 
 const createDefaultFormState = (): ModelFormState => ({
-  id: "",
+  label: "",
   name: "",
   providerPreset: "openai",
   provider: "OpenAI",
@@ -271,7 +273,7 @@ const getProviderOption = (value: ProviderOptionId) =>
 const createFormStateFromModel = (model: ModelConfig): ModelFormState => {
   const preset = inferProviderPreset(model);
   return {
-    id: model.id,
+    label: model.label,
     name: model.name,
     providerPreset: preset,
     provider: model.provider,
@@ -289,25 +291,25 @@ const SETTINGS_SECTIONS: Array<{
   description: string;
   icon: ComponentType<{ className?: string }>;
 }> = [
-    {
-      id: "general",
-      label: "General Settings",
-      description: "Debugging options and interface theme preferences.",
-      icon: Sparkles,
-    },
-    {
-      id: "chatAgent",
-      label: "Chat Agent Models",
-      description: "Configure models for routing, reasoning, and tool usage.",
-      icon: Server,
-    },
-    {
-      id: "data",
-      label: "Data Management",
-      description: "Export configuration or clear session and history.",
-      icon: Trash2,
-    },
-  ];
+  {
+    id: "general",
+    label: "General Settings",
+    description: "Debugging options and interface theme preferences.",
+    icon: Sparkles,
+  },
+  {
+    id: "chatAgent",
+    label: "Chat Agent Models",
+    description: "Configure models for routing, reasoning, and tool usage.",
+    icon: Server,
+  },
+  {
+    id: "data",
+    label: "Data Management",
+    description: "Export configuration or clear session and history.",
+    icon: Trash2,
+  },
+];
 
 interface SettingsPageProps {
   onSettingsChange: (settings: AppSettings) => void;
@@ -330,8 +332,7 @@ export function SettingsPage({
   const [activeSection, setActiveSection] =
     useState<SettingsSectionId>("general");
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
-  const [testInFlight, setTestInFlight] = useState(false);
-  const [routingOpen, setRoutingOpen] = useState(true);
+  const [routingOpen, setRoutingOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
 
   const persistSettings = (next: AppSettings) => {
@@ -348,12 +349,9 @@ export function SettingsPage({
     persistSettings(next);
   };
 
-  const handleModelSelectionChange = (
-    key: ModelSettingKey,
-    value: string
-  ) => {
+  const handleModelSelectionChange = (key: ModelSettingKey, value: string) => {
     const eligible = getEligibleModelsForSetting(key, settings.models);
-    const isEligible = eligible.some((model) => model.id === value);
+    const isEligible = eligible.some((model) => model.label === value);
     if (!isEligible) {
       toast.error("This model does not support the required capability");
       return;
@@ -365,13 +363,16 @@ export function SettingsPage({
     const ensureSelection = (key: ModelSettingKey, current: string) => {
       if (!current) return "";
       const eligible = getEligibleModelsForSetting(key, models);
-      return eligible.some((model) => model.id === current) ? current : "";
+      return eligible.some((model) => model.label === current) ? current : "";
     };
     const next: AppSettings = {
       ...settings,
       models,
       routingModel: ensureSelection("routingModel", settings.routingModel),
-      reasoningModel: ensureSelection("reasoningModel", settings.reasoningModel),
+      reasoningModel: ensureSelection(
+        "reasoningModel",
+        settings.reasoningModel
+      ),
       chatModel: ensureSelection("chatModel", settings.chatModel),
     };
     persistSettings(next);
@@ -384,29 +385,13 @@ export function SettingsPage({
     setDrawerOpen(true);
   };
 
-  const openEditDrawer = (modelId: string) => {
-    const target = settings.models.find((model) => model.id === modelId);
+  const openEditDrawer = (modelLabel: string) => {
+    const target = settings.models.find((model) => model.label === modelLabel);
     if (!target) return;
     setDrawerMode("edit");
     setModelForm(createFormStateFromModel(target));
     setApiKeyVisible(false);
     setDrawerOpen(true);
-  };
-
-  const generateModelId = (name: string) => {
-    const base =
-      name
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "model";
-    const used = new Set(settings.models.map((model) => model.id));
-    let candidate = base;
-    let index = 1;
-    while (used.has(candidate)) {
-      candidate = `${base}-${index++}`;
-    }
-    return candidate;
   };
 
   const handleProviderPresetChange = (value: ProviderOptionId) => {
@@ -431,7 +416,7 @@ export function SettingsPage({
 
   const upsertModel = (form: ModelFormState) => {
     const payload: ModelConfig = {
-      id: form.id,
+      label: form.label.trim(),
       name: form.name.trim(),
       provider: form.provider.trim(),
       baseUrl: form.baseUrl.trim(),
@@ -441,14 +426,16 @@ export function SettingsPage({
 
     if (drawerMode === "edit") {
       const updated = settings.models.map((model) =>
-        model.id === form.id ? payload : model
+        model.label === form.label ? payload : model
       );
       handleModelsChange(updated);
       toast.success("Model updated");
       return;
     }
 
-    const exists = settings.models.some((model) => model.id === payload.id);
+    const exists = settings.models.some(
+      (model) => model.label === payload.label
+    );
     if (exists) {
       toast.error("A model with this identifier already exists");
       return;
@@ -460,22 +447,22 @@ export function SettingsPage({
   const handleSaveModel = () => {
     const trimmedName = modelForm.name.trim();
     if (!trimmedName) {
-      toast.error("Please provide a display name");
+      toast.error("Please provide a model");
       return;
     }
 
-    if (!modelForm.id) {
-      const generated = generateModelId(trimmedName);
-      setModelForm((prev) => ({ ...prev, id: generated }));
-      upsertModel({ ...modelForm, id: generated, name: trimmedName });
-    } else {
-      upsertModel({ ...modelForm, name: trimmedName });
+    if (!modelForm.label.trim()) {
+      toast.error("Please provide a display name");
+      return;
     }
+    upsertModel({ ...modelForm, name: trimmedName });
     setDrawerOpen(false);
   };
 
-  const handleDeleteModel = (modelId: string) => {
-    const remaining = settings.models.filter((model) => model.id !== modelId);
+  const handleDeleteModel = (modelLabel: string) => {
+    const remaining = settings.models.filter(
+      (model) => model.label !== modelLabel
+    );
     handleModelsChange(remaining);
     toast.success("Model removed");
   };
@@ -488,54 +475,6 @@ export function SettingsPage({
   const handleClearAllData = () => {
     clearAllSessions();
     toast.success("All sessions cleared");
-  };
-
-  const handleTestConnection = async () => {
-    const trimmedBaseUrl = modelForm.baseUrl.trim();
-    if (!trimmedBaseUrl) {
-      toast.error("Please provide a base URL before testing");
-      return;
-    }
-
-    const requiresApiKey =
-      modelForm.providerPreset !== "ollama" &&
-      modelForm.providerPreset !== "custom";
-    if (requiresApiKey && !modelForm.apiKey.trim()) {
-      toast.error("Please provide an API key for this provider");
-      return;
-    }
-
-    setTestInFlight(true);
-    const toastId = toast.loading("Testing connection...");
-    try {
-      const response = await fetch("/api/model-test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          providerPreset: modelForm.providerPreset,
-          provider: modelForm.provider,
-          baseUrl: trimmedBaseUrl,
-          apiKey: modelForm.apiKey,
-          modelId: modelForm.id,
-        }),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        const message = payload?.error || "Connection failed";
-        throw new Error(message);
-      }
-
-      toast.success(payload?.message || "Connection succeeded", {
-        id: toastId,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Connection failed";
-      toast.error(message, { id: toastId });
-    } finally {
-      setTestInFlight(false);
-    }
   };
 
   const capabilityValues = capabilityKeys.filter(
@@ -563,23 +502,26 @@ export function SettingsPage({
                   key={section.id}
                   type="button"
                   onClick={() => setActiveSection(section.id)}
-                  className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${isActive
-                    ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-transparent text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                    }`}
+                  className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                    isActive
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
+                      : "border-transparent text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  }`}
                 >
                   <Icon
-                    className={`mt-1 size-5 ${isActive
-                      ? "text-indigo-500 dark:text-indigo-300"
-                      : "text-gray-400 dark:text-gray-500"
-                      }`}
+                    className={`mt-1 size-5 ${
+                      isActive
+                        ? "text-indigo-500 dark:text-indigo-300"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
                   />
                   <div className="flex flex-col space-y-1">
                     <span
-                      className={`font-medium ${isActive
-                        ? "text-indigo-600 dark:text-indigo-200"
-                        : "text-gray-900 dark:text-gray-100"
-                        }`}
+                      className={`font-medium ${
+                        isActive
+                          ? "text-indigo-600 dark:text-indigo-200"
+                          : "text-gray-900 dark:text-gray-100"
+                      }`}
                     >
                       {section.label}
                     </span>
@@ -724,8 +666,8 @@ export function SettingsPage({
                             Chat Task Routing
                           </h2>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Choose which configured model handles each stage of the
-                            agent pipeline.
+                            Choose which configured model handles each stage of
+                            the agent pipeline.
                           </p>
                         </div>
                         <CollapsibleTrigger asChild>
@@ -734,7 +676,9 @@ export function SettingsPage({
                             className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
                           >
                             <ChevronDown
-                              className={`h-4 w-4 transition-transform ${routingOpen ? "" : "-rotate-90"}`}
+                              className={`h-4 w-4 transition-transform ${
+                                routingOpen ? "" : "-rotate-90"
+                              }`}
                             />
                           </button>
                         </CollapsibleTrigger>
@@ -788,8 +732,8 @@ export function SettingsPage({
                                   <SelectContent>
                                     {eligibleModels.map((model) => (
                                       <SelectItem
-                                        key={`${key}-${model.id}`}
-                                        value={model.id}
+                                        key={`${key}-${model.label}`}
+                                        value={model.label}
                                       >
                                         {model.name}
                                       </SelectItem>
@@ -807,7 +751,7 @@ export function SettingsPage({
 
                 <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
                   <Card className="p-6">
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -818,166 +762,196 @@ export function SettingsPage({
                             capabilities, and availability.
                           </p>
                         </div>
-                        <Button
-                          onClick={openCreateDrawer}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Plus className="mr-2 h-4 w-4" /> Add Model
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={openCreateDrawer}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <Plus className="mr-2 h-4 w-4" /> Add Model
+                          </Button>
+                          <CollapsibleTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
+                            >
+                              <ChevronDown
+                                className={`h-4 w-4 transition-transform ${
+                                  libraryOpen ? "" : "-rotate-90"
+                                }`}
+                              />
+                            </button>
+                          </CollapsibleTrigger>
+                        </div>
                       </div>
 
-                      <Card className="border border-dashed p-0">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[28%]">Model</TableHead>
-                              <TableHead className="w-[18%]">Provider</TableHead>
-                              <TableHead className="w-[20%]">
-                                Capabilities
-                              </TableHead>
-                              <TableHead className="w-[18%]">Endpoint</TableHead>
-                              <TableHead className="w-[14%]">API Key</TableHead>
-                              <TableHead className="w-[2%] text-right"></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {settings.models.length === 0 ? (
+                      <CollapsibleContent className="mt-2">
+                        <Card className="border border-dashed p-0">
+                          <Table>
+                            <TableHeader>
                               <TableRow>
-                                <TableCell
-                                  colSpan={6}
-                                  className="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
-                                >
-                                  No models added yet. Click “Add Model” to get
-                                  started.
-                                </TableCell>
+                                <TableHead className="w-[28%]">Model</TableHead>
+                                <TableHead className="w-[18%]">
+                                  Provider
+                                </TableHead>
+                                <TableHead className="w-[20%]">
+                                  Capabilities
+                                </TableHead>
+                                <TableHead className="w-[18%]">
+                                  Endpoint
+                                </TableHead>
+                                <TableHead className="w-[14%]">
+                                  API Key
+                                </TableHead>
+                                <TableHead className="w-[2%] text-right"></TableHead>
                               </TableRow>
-                            ) : (
-                              settings.models.map((model) => {
-                                const preset = getProviderOption(
-                                  inferProviderPreset(model)
-                                );
-                                return (
-                                  <TableRow key={model.id}>
-                                    <TableCell>
-                                      <div className="flex flex-col">
-                                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                                          {model.name}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          {model.id}
-                                        </span>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex items-center gap-2">
-                                        {preset ? (
-                                          <preset.icon className="h-4 w-4 text-gray-500" />
-                                        ) : null}
-                                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                                          {model.provider || "—"}
-                                        </span>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex items-center gap-2">
-                                        {CAPABILITY_METADATA.map(
-                                          ({ key, icon: Icon, label }) => (
-                                            <Tooltip key={`${model.id}-${key}`}>
-                                              <TooltipTrigger asChild>
-                                                <span
-                                                  className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${model.capabilities[key]
-                                                    ? "border-indigo-500 bg-indigo-500/10 text-indigo-500"
-                                                    : "border-gray-200 text-gray-400 dark:border-gray-700"
-                                                    }`}
-                                                >
-                                                  <Icon className="h-4 w-4" />
-                                                </span>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                {label}
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          )
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                                            {model.baseUrl
-                                              ? model.baseUrl
-                                                .replace(/^https?:\/\//, "")
-                                                .slice(0, 28) +
-                                              (model.baseUrl.length > 28
-                                                ? "…"
-                                                : "")
-                                              : "Not set"}
+                            </TableHeader>
+                            <TableBody>
+                              {settings.models.length === 0 ? (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={6}
+                                    className="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                                  >
+                                    No models added yet. Click “Add Model” to
+                                    get started.
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                settings.models.map((model) => {
+                                  const preset = getProviderOption(
+                                    inferProviderPreset(model)
+                                  );
+                                  return (
+                                    <TableRow key={model.label}>
+                                      <TableCell>
+                                        <div className="flex flex-col">
+                                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                                            {model.name}
                                           </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          {model.baseUrl || "—"}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-700 dark:text-gray-300">
-                                      {maskApiKey(model.apiKey)}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex items-center justify-end gap-1">
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-8 w-8"
-                                          onClick={() => openEditDrawer(model.id)}
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <AlertDialog>
-                                          <AlertDialogTrigger asChild>
-                                            <Button
-                                              size="icon"
-                                              variant="ghost"
-                                              className="h-8 w-8 text-red-500"
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </AlertDialogTrigger>
-                                          <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                              <AlertDialogTitle>
-                                                Remove {model.name}?
-                                              </AlertDialogTitle>
-                                              <AlertDialogDescription>
-                                                This model will no longer be
-                                                available for routing selections.
-                                              </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                              <AlertDialogCancel>
-                                                Cancel
-                                              </AlertDialogCancel>
-                                              <AlertDialogAction
-                                                onClick={() =>
-                                                  handleDeleteModel(model.id)
-                                                }
-                                                className="bg-red-600 hover:bg-red-700"
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            {model.label}
+                                          </span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          {preset ? (
+                                            <preset.icon className="h-4 w-4 text-gray-500" />
+                                          ) : null}
+                                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                                            {model.provider || "—"}
+                                          </span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          {CAPABILITY_METADATA.map(
+                                            ({ key, icon: Icon, label }) => (
+                                              <Tooltip
+                                                key={`${model.label}-${key}`}
                                               >
-                                                Remove
-                                              </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                          </AlertDialogContent>
-                                        </AlertDialog>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })
-                            )}
-                          </TableBody>
-                        </Table>
-                      </Card>
+                                                <TooltipTrigger asChild>
+                                                  <span
+                                                    className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${
+                                                      model.capabilities[key]
+                                                        ? "border-indigo-500 bg-indigo-500/10 text-indigo-500"
+                                                        : "border-gray-200 text-gray-400 dark:border-gray-700"
+                                                    }`}
+                                                  >
+                                                    <Icon className="h-4 w-4" />
+                                                  </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  {label}
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            )
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                              {model.baseUrl
+                                                ? model.baseUrl
+                                                    .replace(/^https?:\/\//, "")
+                                                    .slice(0, 28) +
+                                                  (model.baseUrl.length > 28
+                                                    ? "…"
+                                                    : "")
+                                                : "Not set"}
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            {model.baseUrl || "—"}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell className="text-sm text-gray-700 dark:text-gray-300">
+                                        {maskApiKey(model.apiKey)}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8"
+                                            onClick={() =>
+                                              openEditDrawer(model.label)
+                                            }
+                                          >
+                                            <Pencil className="h-4 w-4" />
+                                          </Button>
+                                          <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-red-500"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                <AlertDialogTitle>
+                                                  Remove {model.name}?
+                                                </AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                  This model will no longer be
+                                                  available for routing
+                                                  selections.
+                                                </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                <AlertDialogCancel>
+                                                  Cancel
+                                                </AlertDialogCancel>
+                                                <AlertDialogAction
+                                                  onClick={() =>
+                                                    handleDeleteModel(
+                                                      model.label
+                                                    )
+                                                  }
+                                                  className="bg-red-600 hover:bg-red-700"
+                                                >
+                                                  Remove
+                                                </AlertDialogAction>
+                                              </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                          </AlertDialog>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })
+                              )}
+                            </TableBody>
+                          </Table>
+                        </Card>
+                      </CollapsibleContent>
                     </div>
                   </Card>
                 </Collapsible>
@@ -1085,7 +1059,22 @@ export function SettingsPage({
           <div className="flex-1 space-y-6 overflow-y-auto p-4">
             <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
               <div className="space-y-2">
-                <Label htmlFor="model-name">Display Name</Label>
+                <Label htmlFor="model-label">Display Label</Label>
+                <Input
+                  id="model-label"
+                  value={modelForm.label}
+                  disabled={drawerMode === "edit"}
+                  onChange={(event) =>
+                    setModelForm((prev) => ({
+                      ...prev,
+                      label: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g. my gpt 1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="model-name">Model Name</Label>
                 <Input
                   id="model-name"
                   value={modelForm.name}
@@ -1095,22 +1084,7 @@ export function SettingsPage({
                       name: event.target.value,
                     }))
                   }
-                  placeholder="e.g. gpt-4o-mini"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="model-id">Model ID</Label>
-                <Input
-                  id="model-id"
-                  value={modelForm.id}
-                  disabled={drawerMode === "edit"}
-                  onChange={(event) =>
-                    setModelForm((prev) => ({
-                      ...prev,
-                      id: event.target.value,
-                    }))
-                  }
-                  placeholder="auto-generated"
+                  placeholder="Model used by the API"
                 />
               </div>
             </div>
@@ -1249,28 +1223,6 @@ export function SettingsPage({
                 ))}
               </ToggleGroup>
             </div>
-
-            <div className="flex flex-col gap-2 rounded-md border border-dashed border-gray-200 p-4 dark:border-gray-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Connection Check
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Validates the configured API key and base URL by calling a
-                    lightweight endpoint.
-                  </p>
-                </div>
-                <Button
-                  onClick={handleTestConnection}
-                  size="sm"
-                  variant="outline"
-                  disabled={testInFlight}
-                >
-                  <TestTubeDiagonal className="mr-2 h-4 w-4" /> Test
-                </Button>
-              </div>
-            </div>
           </div>
 
           <DrawerFooter>
@@ -1288,7 +1240,7 @@ export function SettingsPage({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        Delete {modelForm.name || modelForm.id}?
+                        Delete {modelForm.name || modelForm.label}?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         Removing this model will break routing selections that
@@ -1299,7 +1251,7 @@ export function SettingsPage({
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
-                          handleDeleteModel(modelForm.id);
+                          handleDeleteModel(modelForm.label);
                           setDrawerOpen(false);
                         }}
                         className="bg-red-600 hover:bg-red-700"

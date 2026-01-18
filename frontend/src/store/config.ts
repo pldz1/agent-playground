@@ -7,26 +7,28 @@ import {
 
 const ROLE_META: Record<
   ModelRole,
-  { label: string; select: (settings: AppSettings) => string }
+  { roleLabel: string; select: (settings: AppSettings) => string }
 > = {
-  chat: { label: "Chat model", select: (settings) => settings.chatModel },
+  chat: { roleLabel: "Chat model", select: (settings) => settings.chatModel },
   reasoning: {
-    label: "Reasoning model",
+    roleLabel: "Reasoning model",
     select: (settings) => settings.reasoningModel,
   },
   router: {
-    label: "Routing model",
+    roleLabel: "Routing model",
     select: (settings) => settings.routingModel,
   },
 };
 
 export const modelConfig = (settings: AppSettings): ModelConfigStatus => {
   const issues: ModelConfigIssue[] = [];
-  const findModel = (id: string | null | undefined) =>
-    id ? settings.models.find((model) => model.id === id) ?? null : null;
+  const findModel = (label: string | null | undefined) =>
+    label
+      ? settings.models.find((model) => model.label === label) ?? null
+      : null;
 
   (Object.keys(ROLE_META) as ModelRole[]).forEach((role) => {
-    const { label, select } = ROLE_META[role];
+    const { roleLabel, select } = ROLE_META[role];
     const selectedId = select(settings) || null;
     const model = findModel(selectedId);
 
@@ -39,8 +41,8 @@ export const modelConfig = (settings: AppSettings): ModelConfigStatus => {
     if (!model || missingBaseUrl || missingApiKey) {
       issues.push({
         role,
-        label,
-        modelId: model?.id ?? selectedId,
+        roleLabel,
+        modelLabel: model?.label ?? selectedId,
         modelName: model?.name ?? null,
         missingApiKey: !model || missingApiKey,
         missingBaseUrl: !model || missingBaseUrl,

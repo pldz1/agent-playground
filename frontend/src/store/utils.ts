@@ -16,6 +16,8 @@ export const defaultSettings: AppSettings = {
   routingModel: "",
   reasoningModel: "",
   chatModel: "",
+  webSearchModel: "",
+  imageGenerationModel: "",
   models: [],
 };
 
@@ -24,12 +26,12 @@ export const cloneModel = (model: ModelConfig): ModelConfig => ({
   capabilities: { ...model.capabilities },
 });
 
-export const ensureUniqueId = (
-  preferredId: string,
+export const ensureUniqueLabel = (
+  preferredLabel: string,
   used: Set<string>,
   fallbackIndex: number
 ): string => {
-  const base = preferredId.trim() || `model-${fallbackIndex + 1}`;
+  const base = preferredLabel.trim() || `model-${fallbackIndex + 1}`;
   let candidate = base;
   let attempt = 1;
   while (!candidate || used.has(candidate)) {
@@ -58,9 +60,9 @@ export const normalizeModel = (
   if (typeof model === "string") {
     const name = model.trim();
     if (!name) return null;
-    const id = ensureUniqueId(name, used, index);
+    const label = ensureUniqueLabel(name, used, index);
     return {
-      id,
+      label,
       name,
       provider: "",
       baseUrl: "",
@@ -72,9 +74,10 @@ export const normalizeModel = (
   if (typeof model === "object") {
     const source = model as Partial<ModelConfig> & Record<string, unknown>;
     const rawName = typeof source.name === "string" ? source.name.trim() : "";
-    const rawId = typeof source.id === "string" ? source.id.trim() : "";
-    const id = ensureUniqueId(rawId || rawName, used, index);
-    const name = rawName || id;
+    const rawLabel =
+      typeof source.label === "string" ? source.label.trim() : "";
+    const label = ensureUniqueLabel(rawLabel, used, index);
+
     const provider =
       typeof source.provider === "string" ? source.provider.trim() : "";
     const baseUrl =
@@ -83,8 +86,8 @@ export const normalizeModel = (
       typeof source.apiKey === "string" ? source.apiKey.trim() : "";
 
     return {
-      id,
-      name,
+      label,
+      name: rawName,
       provider,
       baseUrl,
       apiKey,
@@ -121,14 +124,15 @@ export const normalizeSettings = (
     source.models ?? source.availableModels,
     base.models
   );
-  const fallbackModelId = models[0]?.id ?? "";
+  const fallbackModelLabel = models[0]?.label ?? "";
 
   const pickModel = (value: unknown, defaultValue: string): string => {
     const candidate = typeof value === "string" ? value.trim() : "";
-    if (candidate && models.some((model) => model.id === candidate))
+    if (candidate && models.some((model) => model.label === candidate))
       return candidate;
-    if (models.some((model) => model.id === defaultValue)) return defaultValue;
-    return fallbackModelId;
+    if (models.some((model) => model.label === defaultValue))
+      return defaultValue;
+    return fallbackModelLabel;
   };
 
   return {
@@ -138,6 +142,11 @@ export const normalizeSettings = (
     routingModel: pickModel(source.routingModel, base.routingModel),
     reasoningModel: pickModel(source.reasoningModel, base.reasoningModel),
     chatModel: pickModel(source.chatModel, base.chatModel),
+    webSearchModel: pickModel(source.webSearchModel, base.webSearchModel),
+    imageGenerationModel: pickModel(
+      source.imageGenerationModel,
+      base.imageGenerationModel
+    ),
     models,
   };
 };
