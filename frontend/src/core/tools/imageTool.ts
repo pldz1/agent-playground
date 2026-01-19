@@ -114,7 +114,6 @@ export class ImageTool {
 
     const data = await res.json();
     return {
-      mocked: false,
       savedFiles: [],
       data,
     };
@@ -174,7 +173,6 @@ export class ImageTool {
       });
 
       return {
-        mocked: false,
         text: completion.choices?.[0]?.message?.content ?? "",
         choice: completion.choices?.[0],
       };

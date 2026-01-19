@@ -12,7 +12,6 @@ import {
 import type { ComponentType } from "react";
 import type { ModelCapabilities, ModelConfig } from "@/types";
 
-
 export type ProviderOptionId =
   | "openai"
   | "anthropic"
@@ -52,7 +51,7 @@ export const MODEL_SELECT_COPY: Record<
   routingModel: {
     label: "Routing Model",
     description:
-      "Determines how user intent is classified and routed to the right toolchain.",
+      "Determines how user intents are classified and routed to the right toolchain.",
   },
   chatModel: {
     label: "Chat Model",
@@ -185,8 +184,6 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
     icon: Trash2,
   },
 ];
-
-
 
 export const getEligibleModelsForSetting = (
   key: ModelSettingKey,

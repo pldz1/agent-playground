@@ -55,7 +55,6 @@ export class ChatTool {
       });
 
       return {
-        mocked: false,
         text: completion.choices?.[0]?.message?.content ?? "",
         choice: completion.choices?.[0],
       };

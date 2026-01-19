@@ -25,11 +25,7 @@ function normalizeRoute(route: any): IntentName[] {
   ]);
 
   const intents =
-    Array.isArray(route?.intents) && route.intents.length
-      ? route.intents
-      : route?.intent
-      ? [route.intent]
-      : [];
+    Array.isArray(route?.intents) && route.intents.length ? route.intents : [];
 
   const cleaned = intents
     .map((x: any) => String(x || "").trim())
@@ -48,14 +44,12 @@ export async function route({
   intents: IntentName[];
   raw: any;
   model: string;
-  mocked: boolean;
 }> {
   if (hasImage) {
     return {
       intents: ["image_understand"],
-      raw: { intent: "image_understand" },
+      raw: { intents: "image_understand" },
       model: "heuristic",
-      mocked: false,
     };
   }
 
@@ -94,7 +88,6 @@ export async function route({
       intents,
       raw: parsed,
       model: modelName,
-      mocked: false,
     };
   } catch (error) {
     logger.error("Router.route:error", {

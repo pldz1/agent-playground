@@ -31,7 +31,6 @@ export class WebSearchTool {
       });
 
       return {
-        mocked: false,
         query: input,
         output_text: response.output_text,
         response,

@@ -15,9 +15,9 @@ Output rules (STRICT):
   - image_understand
 - Prefer minimal tool usage.
 
-Multi-intent:
-- If multiple tools are needed in sequence, output an array in "intents".
-- If only one tool is needed, you may output either "intent" or "intents".
+Multi-intent Processing:
+- Always output an array under the key "intents", regardless of whether a single tool or multiple tools are required.
+- Do not use the key "intent" under any circumstances.
 
 When choosing a summarizer after web search:
 - Use intents ["web_search","agent"] for quick, lightweight summaries ("随便看看", "简单概览", "帮我总结一下").
@@ -31,12 +31,12 @@ Heuristics:
 - Otherwise => agent.
 
 Examples:
-{"intent":"agent"}
-{"intent":"web_search"}
+{"intents":["agent"]}
+{"intents":["web_search"]}
 {"intents":["web_search","agent"]}
 {"intents":["web_search","reasoning"]}
-{"intent":"image_generate"}
-{"intent":"image_understand"}
+{"intents":["image_generate"}]
+{"intents":["image_understand"]}
 
 Now classify the user's request.
 `;
