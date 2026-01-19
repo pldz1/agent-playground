@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, FormEvent } from 'react';
-import { agent, logger } from '@/core';
+import { agent } from '@/core';
 import {
   getSessions,
   saveSession,
@@ -33,10 +33,10 @@ import {
 } from '../components/ui/alert-dialog';
 import { PanelLeftOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { ChatSidebar } from './chats/chat-sidebar';
-import { ConfigStatusBanner } from './chats/config-status-banner';
-import { EmptyMessagesPlaceholder } from './chats/empty-messages-placeholder';
-import { ChatWelcomePanel } from './chats/chat-welcome-panel';
+import { ChatSidebar } from '../components/chats/chat-sidebar';
+import { ConfigStatusBanner } from '../components/chats/config-status-banner';
+import { EmptyMessagesPlaceholder } from '../components/chats/empty-messages-placeholder';
+import { ChatWelcomePanel } from '../components/chats/chat-welcome-panel';
 
 interface ChatsPageProps {
   debugMode: boolean;

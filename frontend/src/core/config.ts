@@ -44,8 +44,10 @@ function selectModelName(settings: AppSettings, role: ModelRole): string {
   switch (role) {
     case "chat":
       return settings.chatModel;
+    case "vision":
+      return settings.visionModel;
     case "webSearch":
-      return settings.reasoningModel;
+      return settings.webSearchModel;
     case "reasoning":
       return settings.reasoningModel;
     case "routing":

@@ -20,13 +20,13 @@ import {
   createDefaultFormState,
   createFormStateFromModel,
   getEligibleModelsForSetting,
-} from "./settings/utils";
+} from "../components/settings/utils";
 
-import { SettingsSidebar } from "./settings/settings-sidebar";
-import { GeneralSettingsSection } from "./settings/general-settings-section";
-import { ChatAgentSection } from "./settings/chat-agent-section";
-import { DataManagementSection } from "./settings/data-management-section";
-import { ModelDrawer } from "./settings/model-drawer";
+import { SettingsSidebar } from "../components/settings/settings-sidebar";
+import { GeneralSettingsSection } from "../components/settings/general-settings-section";
+import { ChatAgentSection } from "../components/settings/chat-agent-section";
+import { DataManagementSection } from "../components/settings/data-management-section";
+import { ModelDrawer } from "../components/settings/model-drawer";
 
 interface SettingsPageProps {
   onSettingsChange: (settings: AppSettings) => void;
