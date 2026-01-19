@@ -7,7 +7,13 @@ import {
   renameSession,
 } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
-import type { Session, Message, ModelConfigIssue } from '@/types';
+import type {
+  AgentProgressEvent,
+  Message,
+  ModelConfigIssue,
+  Session,
+  ToolName,
+} from '@/types';
 import { MessageCard } from '../components/message-card';
 import { Composer } from '../components/composer';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -37,6 +43,7 @@ import { ChatSidebar } from '../components/chats/chat-sidebar';
 import { ConfigStatusBanner } from '../components/chats/config-status-banner';
 import { EmptyMessagesPlaceholder } from '../components/chats/empty-messages-placeholder';
 import { ChatWelcomePanel } from '../components/chats/chat-welcome-panel';
+import { ChatProgress, type ChatProgressEntry } from '../components/chats/chat-progress';
 
 interface ChatsPageProps {
   debugMode: boolean;
@@ -73,6 +80,19 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const TOOL_LABELS: Record<ToolName, string> = {
+  chat: '对话',
+  web_search: '搜索',
+  reasoning: '思考',
+  image_generate: '图片生成',
+  image_understand: '图片理解',
+};
+
+const ROUTE_ENTRY_ID = 'route';
+const ROUTE_LABEL = 'Route 推测';
+
+const describeTool = (tool: ToolName) => TOOL_LABELS[tool] ?? tool;
+
 export function ChatsPage({
   debugMode,
   isModelConfigured,
@@ -87,6 +107,7 @@ export function ChatsPage({
   const [renameValue, setRenameValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
 
   useEffect(() => {
     const loaded = getSessions().sort((a, b) => b.updatedAt - a.updatedAt);
@@ -183,6 +204,92 @@ export function ChatsPage({
     [createSession, sessions],
   );
 
+  const handleAgentProgress = useCallback((event: AgentProgressEvent) => {
+    setProgressEntries((prev) => {
+      const ensureRouteEntry = (status: ChatProgressEntry['status'], detail: string) => {
+        const hasRouteEntry = prev.some((entry) => entry.id === ROUTE_ENTRY_ID);
+        if (hasRouteEntry) {
+          return prev.map((entry) =>
+            entry.id === ROUTE_ENTRY_ID ? { ...entry, status, detail } : entry,
+          );
+        }
+        return [
+          {
+            id: ROUTE_ENTRY_ID,
+            label: ROUTE_LABEL,
+            status,
+            detail,
+          },
+          ...prev,
+        ];
+      };
+
+      switch (event.type) {
+        case 'route:start':
+          return [
+            {
+              id: ROUTE_ENTRY_ID,
+              label: ROUTE_LABEL,
+              status: 'running',
+              detail: '正在分析意图...',
+            },
+          ];
+        case 'route:complete': {
+          const detail =
+            event.intents && event.intents.length
+              ? `推测结果：${event.intents.join(' / ')}`
+              : '未能识别意图';
+          return ensureRouteEntry('success', detail);
+        }
+        case 'plan:ready': {
+          const existingIds = new Set(prev.map((entry) => entry.id));
+          const pendingSteps = (event.steps ?? [])
+            .filter((step) => !existingIds.has(step.id))
+            .map((step) => ({
+              id: step.id,
+              label: describeTool(step.tool),
+              status: 'pending' as const,
+              detail: `等待执行 ${describeTool(step.tool)}`,
+            }));
+          return [...prev, ...pendingSteps];
+        }
+        case 'step:start':
+          return prev.map((entry) =>
+            entry.id === event.step.id
+              ? {
+                ...entry,
+                status: 'running',
+                detail: `正在${describeTool(event.step.tool)}`,
+              }
+              : entry,
+          );
+        case 'step:complete':
+          return prev.map((entry) =>
+            entry.id === event.step.id
+              ? {
+                ...entry,
+                status: 'success',
+                detail: `${describeTool(event.step.tool)} 完成`,
+              }
+              : entry,
+          );
+        case 'step:error':
+          return prev.map((entry) =>
+            entry.id === event.step.id
+              ? {
+                ...entry,
+                status: 'fail',
+                detail: event.error,
+              }
+              : entry,
+          );
+        case 'complete':
+        default:
+          return prev;
+      }
+    });
+  }, []);
+
   const handleSendMessage = useCallback(
     async (text: string, imageFile?: File) => {
       if (!isModelConfigured) {
@@ -236,6 +343,7 @@ export function ChatsPage({
         const result = await agent.handle({
           text,
           image: imageData,
+          onProgress: handleAgentProgress,
         });
 
         const assistantMessage: Message = {
@@ -269,9 +377,10 @@ export function ChatsPage({
         toast.error('Execution failed', { description: message });
       } finally {
         setIsProcessing(false);
+        setProgressEntries([]);
       }
     },
-    [currentSessionId, ensureSession, isModelConfigured, upsertSession],
+    [currentSessionId, ensureSession, handleAgentProgress, isModelConfigured, upsertSession],
   );
 
   const handleDeleteCurrentSession = useCallback(() => {
@@ -407,6 +516,9 @@ export function ChatsPage({
                     ))
                   ) : (
                     <EmptyMessagesPlaceholder />
+                  )}
+                  {isProcessing && progressEntries.length > 0 && (
+                    <ChatProgress entries={progressEntries} />
                   )}
                 </div>
               </ScrollArea>

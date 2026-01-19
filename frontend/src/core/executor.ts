@@ -2,6 +2,11 @@ import { ChatTool } from "./tools/chatTool";
 import { WebSearchTool } from "./tools/webSearchTool";
 import { ReasoningTool } from "./tools/reasoningTool";
 import { ImageTool } from "./tools/imageTool";
+import type {
+  AgentPlanProgressStep,
+  AgentProgressEvent,
+  ToolName,
+} from "@/types";
 
 export type IntentName =
   | "chat"
@@ -43,12 +48,22 @@ export class Executor {
     input,
     intents,
     image,
+    onProgress,
   }: {
     input: string;
     intents: IntentName[];
     image?: ImageInput;
+    onProgress?: (event: AgentProgressEvent) => void;
   }) {
     const plan = this.#normalizePlan(intents, { hasImage: Boolean(image) });
+    const planSteps: AgentPlanProgressStep[] = plan.map((tool, index) => ({
+      id: `step-${index}`,
+      tool: tool as ToolName,
+    }));
+
+    if (planSteps.length) {
+      onProgress?.({ type: "plan:ready", steps: planSteps });
+    }
 
     let context: {
       input: string;
@@ -64,49 +79,90 @@ export class Executor {
       plan,
     };
 
-    for (const step of plan) {
-      if (step === "chat") {
-        const answer = await this.tools.chat.reply({
-          input,
-          context: context.web,
-        });
-        context.outputs.push({ step, answer });
-        continue;
+    for (let index = 0; index < plan.length; index += 1) {
+      const step = plan[index];
+      const stepMeta = planSteps[index];
+      if (stepMeta) {
+        onProgress?.({ type: "step:start", step: stepMeta });
       }
 
-      if (step === "web_search") {
-        const web = await this.tools.web_search.search({ input });
-        context.web = web;
-        context.outputs.push({ step, web });
-        continue;
-      }
+      try {
+        if (step === "chat") {
+          const answer = await this.tools.chat.reply({
+            input,
+            context: context.web,
+          });
+          context.outputs.push({ step, answer });
+          if (stepMeta) {
+            onProgress?.({ type: "step:complete", step: stepMeta });
+          }
+          continue;
+        }
 
-      if (step === "reasoning") {
-        const answer = await this.tools.reasoning.think({
-          input,
-          context: context.web,
-        });
-        context.outputs.push({ step, answer });
-        continue;
-      }
+        if (step === "web_search") {
+          const web = await this.tools.web_search.search({ input });
+          context.web = web;
+          context.outputs.push({ step, web });
+          if (stepMeta) {
+            onProgress?.({ type: "step:complete", step: stepMeta });
+          }
+          continue;
+        }
 
-      if (step === "image_generate") {
-        const result = await this.tools.image.generate({ prompt: input });
-        context.outputs.push({ step, result });
-        continue;
-      }
+        if (step === "reasoning") {
+          const answer = await this.tools.reasoning.think({
+            input,
+            context: context.web,
+          });
+          context.outputs.push({ step, answer });
+          if (stepMeta) {
+            onProgress?.({ type: "step:complete", step: stepMeta });
+          }
+          continue;
+        }
 
-      if (step === "image_understand") {
-        const result = await this.tools.image.understand({
-          prompt: input,
-          image,
-        });
-        context.outputs.push({ step, result });
-        continue;
-      }
+        if (step === "image_generate") {
+          const result = await this.tools.image.generate({ prompt: input });
+          context.outputs.push({ step, result });
+          if (stepMeta) {
+            onProgress?.({ type: "step:complete", step: stepMeta });
+          }
+          continue;
+        }
 
-      context.outputs.push({ step, error: `Unknown step: ${step}` });
+        if (step === "image_understand") {
+          const result = await this.tools.image.understand({
+            prompt: input,
+            image,
+          });
+          context.outputs.push({ step, result });
+          if (stepMeta) {
+            onProgress?.({ type: "step:complete", step: stepMeta });
+          }
+          continue;
+        }
+
+        const unknownMessage = `Unknown step: ${step}`;
+        context.outputs.push({ step, error: unknownMessage });
+        if (stepMeta) {
+          onProgress?.({
+            type: "step:error",
+            step: stepMeta,
+            error: unknownMessage,
+          });
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error);
+        context.outputs.push({ step, error: message });
+        if (stepMeta) {
+          onProgress?.({ type: "step:error", step: stepMeta, error: message });
+        }
+        throw error;
+      }
     }
+
+    onProgress?.({ type: "complete" });
 
     return context;
   }

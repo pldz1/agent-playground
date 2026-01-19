@@ -2,6 +2,7 @@ import type { ImageInput, IntentName, ToolRunOutput } from "./executor";
 import type {
   AgentInput,
   AgentOutput,
+  AgentProgressEvent,
   PlanStep,
   ToolName,
   ToolOutput,
@@ -193,9 +194,11 @@ export class CoreAgent {
   async handle({
     input,
     image,
+    onProgress,
   }: {
     input: string;
     image?: ImageInput;
+    onProgress?: (event: AgentProgressEvent) => void;
   }): Promise<{
     routing: any;
     plan: any;
@@ -204,11 +207,17 @@ export class CoreAgent {
     image?: ImageInput;
     web: any;
   }> {
+    onProgress?.({ type: "route:start" });
     const routing = await route({ input, hasImage: Boolean(image) });
+    onProgress?.({
+      type: "route:complete",
+      intents: Array.isArray(routing.intents) ? routing.intents : [],
+    });
     const result = await this.executor.run({
       input,
       intents: routing.intents,
       image,
+      onProgress,
     });
 
     return {
@@ -230,6 +239,7 @@ export class Agent {
     const result = await this.#core.handle({
       input: input.text,
       image,
+      onProgress: input.onProgress,
     });
 
     const plan = Array.isArray(result.plan)

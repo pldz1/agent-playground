@@ -59,9 +59,24 @@ export interface ToolOutput {
   error?: string;
 }
 
+export interface AgentPlanProgressStep {
+  id: string;
+  tool: ToolName;
+}
+
+export type AgentProgressEvent =
+  | { type: "route:start" }
+  | { type: "route:complete"; intents: string[] }
+  | { type: "plan:ready"; steps: AgentPlanProgressStep[] }
+  | { type: "step:start"; step: AgentPlanProgressStep }
+  | { type: "step:complete"; step: AgentPlanProgressStep }
+  | { type: "step:error"; step: AgentPlanProgressStep; error: string }
+  | { type: "complete" };
+
 export interface AgentInput {
   text: string;
   image?: File | string;
+  onProgress?: (event: AgentProgressEvent) => void;
 }
 
 export interface AgentOutput {
