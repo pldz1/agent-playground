@@ -9,16 +9,30 @@ const ROLE_META: Record<
   ModelRole,
   { roleLabel: string; select: (settings: AppSettings) => string }
 > = {
+  routing: {
+    roleLabel: "Routing model",
+    select: (settings) => settings.routingModel,
+  },
   chat: { roleLabel: "Chat model", select: (settings) => settings.chatModel },
+  vision: {
+    roleLabel: "Vision model",
+    select: (settings) => settings.visionModel,
+  },
   reasoning: {
     roleLabel: "Reasoning model",
     select: (settings) => settings.reasoningModel,
   },
-  router: {
-    roleLabel: "Routing model",
-    select: (settings) => settings.routingModel,
+  webSearch: {
+    roleLabel: "Web search model",
+    select: (settings) => settings.webSearchModel,
+  },
+  image: {
+    roleLabel: "Image generation model",
+    select: (settings) => settings.imageModel,
   },
 };
+
+const REQUIRED_ROLES: ModelRole[] = ["chat", "routing"];
 
 export const modelConfig = (settings: AppSettings): ModelConfigStatus => {
   const issues: ModelConfigIssue[] = [];
@@ -50,5 +64,9 @@ export const modelConfig = (settings: AppSettings): ModelConfigStatus => {
     }
   });
 
-  return { configured: issues.length === 0, issues };
+  const configured = REQUIRED_ROLES.every(
+    (role) => !issues.some((issue) => issue.role === role)
+  );
+
+  return { configured, issues };
 };

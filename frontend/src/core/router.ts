@@ -53,7 +53,7 @@ export async function route({
     };
   }
 
-  const auth = resolveAuth("router");
+  const auth = resolveAuth("routing");
   const client = getOpenAIClient(auth);
   const modelName = auth.modelName;
   const started = now();
@@ -83,6 +83,7 @@ export async function route({
     const text = completion.choices?.[0]?.message?.content ?? "{}";
     const parsed = safeJsonParse(text) || {};
     const intents = normalizeRoute(parsed);
+    console.log(parsed);
 
     return {
       intents,

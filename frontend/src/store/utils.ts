@@ -7,7 +7,7 @@ export const DEFAULT_CAPABILITIES: ModelCapabilities = {
   vision: false,
   webSearch: false,
   reasoning: false,
-  imageGeneration: false,
+  image: false,
 };
 
 export const defaultSettings: AppSettings = {
@@ -16,8 +16,9 @@ export const defaultSettings: AppSettings = {
   routingModel: "",
   reasoningModel: "",
   chatModel: "",
+  visionModel: "",
   webSearchModel: "",
-  imageGenerationModel: "",
+  imageModel: "",
   models: [],
 };
 
@@ -45,9 +46,7 @@ export const normalizeCapabilities = (value: unknown): ModelCapabilities => ({
   vision: Boolean((value as ModelCapabilities | undefined)?.vision),
   webSearch: Boolean((value as ModelCapabilities | undefined)?.webSearch),
   reasoning: Boolean((value as ModelCapabilities | undefined)?.reasoning),
-  imageGeneration: Boolean(
-    (value as ModelCapabilities | undefined)?.imageGeneration
-  ),
+  image: Boolean((value as ModelCapabilities | undefined)?.image),
 });
 
 export const normalizeModel = (
@@ -143,10 +142,8 @@ export const normalizeSettings = (
     reasoningModel: pickModel(source.reasoningModel, base.reasoningModel),
     chatModel: pickModel(source.chatModel, base.chatModel),
     webSearchModel: pickModel(source.webSearchModel, base.webSearchModel),
-    imageGenerationModel: pickModel(
-      source.imageGenerationModel,
-      base.imageGenerationModel
-    ),
+    imageModel: pickModel(source.imageModel, base.imageModel),
+    visionModel: pickModel(source.visionModel, base.visionModel),
     models,
   };
 };

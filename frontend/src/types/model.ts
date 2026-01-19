@@ -2,7 +2,7 @@ export interface ModelCapabilities {
   vision: boolean;
   webSearch: boolean;
   reasoning: boolean;
-  imageGeneration: boolean;
+  image: boolean;
 }
 
 export interface ModelConfig {
@@ -21,11 +21,18 @@ export interface AppSettings {
   chatModel: string;
   webSearchModel: string;
   reasoningModel: string;
-  imageGenerationModel: string;
+  visionModel: string;
+  imageModel: string;
   models: ModelConfig[];
 }
 
-export type ModelRole = "chat" | "reasoning" | "router";
+export type ModelRole =
+  | "routing"
+  | "chat"
+  | "vision"
+  | "reasoning"
+  | "image"
+  | "webSearch";
 
 export interface ModelConfigIssue {
   role: ModelRole;

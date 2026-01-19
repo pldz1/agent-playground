@@ -93,9 +93,9 @@ export function SettingsPage({
         "webSearchModel",
         settings.webSearchModel
       ),
-      imageGenerationModel: ensureSelection(
-        "imageGenerationModel",
-        settings.imageGenerationModel
+      imageModel: ensureSelection(
+        "imageModel",
+        settings.imageModel
       ),
     };
 

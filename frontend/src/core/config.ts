@@ -1,7 +1,5 @@
-import type { AppSettings, ModelConfig } from "@/types";
+import type { AppSettings, ModelConfig, ModelRole } from "@/types";
 import { getSettings, defaultSettings } from "@/store";
-
-export type ModelRole = "chat" | "reasoning" | "router" | "image";
 
 export interface RuntimeModel {
   label: string;
@@ -30,7 +28,7 @@ const EMPTY_MODEL: ModelConfig = {
     vision: false,
     webSearch: false,
     reasoning: false,
-    imageGeneration: false,
+    image: false,
   },
 };
 
@@ -46,12 +44,14 @@ function selectModelName(settings: AppSettings, role: ModelRole): string {
   switch (role) {
     case "chat":
       return settings.chatModel;
+    case "webSearch":
+      return settings.reasoningModel;
     case "reasoning":
       return settings.reasoningModel;
-    case "router":
+    case "routing":
       return settings.routingModel;
     case "image":
-      return settings.imageGenerationModel;
+      return settings.imageModel;
     default:
       return settings.chatModel;
   }

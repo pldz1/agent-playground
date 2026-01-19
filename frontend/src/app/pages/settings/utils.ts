@@ -40,33 +40,38 @@ export interface ModelFormState {
 export type ModelSettingKey =
   | "routingModel"
   | "chatModel"
+  | "visionModel"
   | "webSearchModel"
   | "reasoningModel"
-  | "imageGenerationModel";
+  | "imageModel";
 
 export const MODEL_SELECT_COPY: Record<
   ModelSettingKey,
   { label: string; description: string }
 > = {
   routingModel: {
-    label: "Routing Model",
+    label: "Routing model",
     description:
       "Determines how user intents are classified and routed to the right toolchain.",
   },
   chatModel: {
-    label: "Chat Model",
+    label: "Chat model",
     description: "Acts as the default chat model for agent replies.",
   },
+  visionModel: {
+    label: "Vision model",
+    description: "The model capable of understanding image content.",
+  },
   webSearchModel: {
-    label: "Web Search Model",
+    label: "Web search model",
     description: "Handles web search and tool-calling tasks.",
   },
   reasoningModel: {
-    label: "Reasoning Model",
+    label: "Reasoning model",
     description: "Handles deliberate, multi-step reasoning workloads.",
   },
-  imageGenerationModel: {
-    label: "Image Generation Model",
+  imageModel: {
+    label: "Image (editing or generation) model",
     description: "Generates images from textual descriptions.",
   },
 };
@@ -78,7 +83,8 @@ export const MODEL_CAPABILITY_REQUIREMENTS: Partial<
 > = {
   webSearchModel: "webSearch",
   reasoningModel: "reasoning",
-  imageGenerationModel: "imageGeneration",
+  imageModel: "image",
+  visionModel: "vision",
 };
 
 export const CAPABILITY_METADATA: Array<{
@@ -95,7 +101,7 @@ export const CAPABILITY_METADATA: Array<{
   },
   {
     key: "webSearch",
-    label: "Web Search",
+    label: "Web search",
     description: "Can issue web or tool search calls.",
     icon: Globe2,
   },
@@ -106,8 +112,8 @@ export const CAPABILITY_METADATA: Array<{
     icon: Brain,
   },
   {
-    key: "imageGeneration",
-    label: "Image Generation",
+    key: "image",
+    label: "Image editing or generation",
     description: "Creates images from textual prompts.",
     icon: ImageIcon,
   },
@@ -202,7 +208,7 @@ export const EMPTY_CAPABILITIES = (): ModelCapabilities => ({
   vision: false,
   webSearch: false,
   reasoning: false,
-  imageGeneration: false,
+  image: false,
 });
 
 export const createDefaultFormState = (): ModelFormState => ({

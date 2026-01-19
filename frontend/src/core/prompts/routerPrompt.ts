@@ -8,7 +8,7 @@ Task:
 Output rules (STRICT):
 - Output MUST be valid JSON only. No markdown, no extra text.
 - Use one of the allowed intents:
-  - agent
+  - chat
   - web_search
   - reasoning
   - image_generate
@@ -20,7 +20,7 @@ Multi-intent Processing:
 - Do not use the key "intent" under any circumstances.
 
 When choosing a summarizer after web search:
-- Use intents ["web_search","agent"] for quick, lightweight summaries ("随便看看", "简单概览", "帮我总结一下").
+- Use intents ["web_search","chat"] for quick, lightweight summaries ("随便看看", "简单概览", "帮我总结一下").
 - Use intents ["web_search","reasoning"] for deeper analysis (comparison, tradeoffs, multi-angle evaluation, conflicting sources, making a decision, step-by-step reasoning).
 
 Heuristics:
@@ -28,12 +28,12 @@ Heuristics:
 - If user asks for step-by-step solving, complex analysis, planning, proofs => reasoning.
 - If user asks to generate an image / draw / create a picture / poster => image_generate.
 - If user provides an image or asks "what's in this image" => image_understand.
-- Otherwise => agent.
+- Otherwise => chat.
 
 Examples:
-{"intents":["agent"]}
+{"intents":["chat"]}
 {"intents":["web_search"]}
-{"intents":["web_search","agent"]}
+{"intents":["web_search","chat"]}
 {"intents":["web_search","reasoning"]}
 {"intents":["image_generate"}]
 {"intents":["image_understand"]}

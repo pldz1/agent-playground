@@ -7,7 +7,7 @@ const now = () =>
 
 export class WebSearchTool {
   async search({ model, input }: { model?: string; input: string }) {
-    const auth = resolveAuth("reasoning");
+    const auth = resolveAuth("webSearch");
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
     const started = now();
