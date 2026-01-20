@@ -156,7 +156,7 @@ function pickFinalAnswer(outputs: ToolRunOutput[]): string {
     }
 
     if (current.step === "image_generate") {
-      return "Image generation complete, please check the generated image results.";
+      return `![image-${current.result.data.created}](${current.result.data.data[0].b64_json})`;
     }
   }
 

@@ -47,7 +47,7 @@ export default function App() {
   const getCurrentPath = () => (currentPage === "settings" ? "/settings" : "/");
 
   const handleSettingsChange = (newSettings: AppSettings) => {
-    saveSettings(newSettings);
+    void saveSettings(newSettings);
   };
 
   const renderPage = () => {

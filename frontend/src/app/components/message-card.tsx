@@ -28,7 +28,7 @@ export function MessageCard({ message, debugMode }: MessageCardProps) {
       )}
 
       <div
-        className={`flex flex-col gap-2 max-w-[90%] items-start overflow-x-auto w-full ${
+        className={`flex flex-col gap-2 max-w-[90%] overflow-x-auto w-full ${
           isUser ? "items-end" : "items-start"
         }`}
       >

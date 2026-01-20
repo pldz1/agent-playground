@@ -4,6 +4,15 @@ import "./styles/index.css";
 import "md-editor-rt/lib/style.css";
 import { initializeStore } from "./store";
 
-initializeStore();
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Root element with id \"root\" not found");
+}
 
-createRoot(document.getElementById("root")!).render(<App />);
+const renderApp = () => {
+  createRoot(container).render(<App />);
+};
+
+initializeStore().catch((error:any) => {
+  console.error("Failed to initialize application store", error);
+}).finally(renderApp);

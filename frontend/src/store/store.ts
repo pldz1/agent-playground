@@ -7,17 +7,21 @@ import {
   SETTINGS_KEY,
 } from "./utils";
 import { modelConfig } from "./config";
+import { getItem, setItem, removeItem } from "./indexed-db";
 
 interface StoreState {
   sessions: Session[];
   settings: AppSettings;
-  loadSessions: () => void;
-  saveSession: (session: Session) => void;
-  deleteSession: (sessionId: string) => void;
-  renameSession: (sessionId: string, newTitle: string) => Session | null;
-  clearAllSessions: () => void;
-  loadSettings: () => void;
-  saveSettings: (settings: AppSettings) => void;
+  loadSessions: () => Promise<void>;
+  saveSession: (session: Session) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>;
+  renameSession: (
+    sessionId: string,
+    newTitle: string
+  ) => Promise<Session | null>;
+  clearAllSessions: () => Promise<void>;
+  loadSettings: () => Promise<void>;
+  saveSettings: (settings: AppSettings) => Promise<void>;
   computeConfigStatus: () => ModelConfigStatus;
 }
 
@@ -25,9 +29,9 @@ export const useAppStore = create<StoreState>((set, get) => ({
   sessions: [],
   settings: defaultSettings,
 
-  loadSessions: () => {
+  loadSessions: async () => {
     try {
-      const data = localStorage.getItem(SESSIONS_KEY);
+      const data = await getItem(SESSIONS_KEY);
       const sessions = data ? (JSON.parse(data) as Session[]) : [];
       set({ sessions });
     } catch {
@@ -35,24 +39,26 @@ export const useAppStore = create<StoreState>((set, get) => ({
     }
   },
 
-  saveSession: (session) => {
+  saveSession: async (session) => {
+    const sessions = [...get().sessions];
+    const index = sessions.findIndex((s) => s.id === session.id);
+    if (index >= 0) sessions[index] = session;
+    else sessions.push(session);
+    set({ sessions });
     try {
-      const sessions = [...get().sessions];
-      const index = sessions.findIndex((s) => s.id === session.id);
-      if (index >= 0) sessions[index] = session;
-      else sessions.push(session);
-      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-      set({ sessions });
+      await setItem(SESSIONS_KEY, JSON.stringify(sessions));
     } catch {}
   },
 
-  deleteSession: (sessionId) => {
+  deleteSession: async (sessionId) => {
     const sessions = get().sessions.filter((s) => s.id !== sessionId);
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
     set({ sessions });
+    try {
+      await setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    } catch {}
   },
 
-  renameSession: (sessionId, newTitle) => {
+  renameSession: async (sessionId, newTitle) => {
     const title = newTitle.trim();
     if (!title) return null;
 
@@ -66,19 +72,23 @@ export const useAppStore = create<StoreState>((set, get) => ({
       updatedAt: Date.now(),
     };
     sessions[index] = updatedSession;
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
     set({ sessions });
+    try {
+      await setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    } catch {}
     return updatedSession;
   },
 
-  clearAllSessions: () => {
-    localStorage.removeItem(SESSIONS_KEY);
+  clearAllSessions: async () => {
     set({ sessions: [] });
+    try {
+      await removeItem(SESSIONS_KEY);
+    } catch {}
   },
 
-  loadSettings: () => {
+  loadSettings: async () => {
     try {
-      const data = localStorage.getItem(SETTINGS_KEY);
+      const data = await getItem(SETTINGS_KEY);
       const parsed = data ? JSON.parse(data) : {};
       if (parsed?.chatModel && !parsed.chatModel) {
         parsed.chatModel = parsed.chatModel;
@@ -91,50 +101,52 @@ export const useAppStore = create<StoreState>((set, get) => ({
     }
   },
 
-  saveSettings: (settings) => {
+  saveSettings: async (settings) => {
+    set({ settings });
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      set({ settings });
+      await setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch {}
   },
 
   computeConfigStatus: () => modelConfig(get().settings),
 }));
 
-export function initializeStore() {
-  useAppStore.getState().loadSettings();
-  useAppStore.getState().loadSessions();
+export async function initializeStore() {
+  await Promise.all([
+    useAppStore.getState().loadSettings(),
+    useAppStore.getState().loadSessions(),
+  ]);
 }
 
 export const getSessions = (): Session[] => {
   return useAppStore.getState().sessions;
 };
 
-export const saveSession = (session: Session): void => {
-  useAppStore.getState().saveSession(session);
+export const saveSession = (session: Session): Promise<void> => {
+  return useAppStore.getState().saveSession(session);
 };
 
-export const deleteSession = (sessionId: string): void => {
-  useAppStore.getState().deleteSession(sessionId);
+export const deleteSession = (sessionId: string): Promise<void> => {
+  return useAppStore.getState().deleteSession(sessionId);
 };
 
 export const renameSession = (
   sessionId: string,
   newTitle: string
-): Session | null => {
+): Promise<Session | null> => {
   return useAppStore.getState().renameSession(sessionId, newTitle);
 };
 
-export const clearAllSessions = (): void => {
-  useAppStore.getState().clearAllSessions();
+export const clearAllSessions = (): Promise<void> => {
+  return useAppStore.getState().clearAllSessions();
 };
 
 export const getSettings = (): AppSettings => {
   return useAppStore.getState().settings;
 };
 
-export const saveSettings = (settings: AppSettings): void => {
-  useAppStore.getState().saveSettings(settings);
+export const saveSettings = (settings: AppSettings): Promise<void> => {
+  return useAppStore.getState().saveSettings(settings);
 };
 
 export const computeModelConfigStatus = () => {

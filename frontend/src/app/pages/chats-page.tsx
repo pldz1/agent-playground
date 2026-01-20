@@ -162,7 +162,7 @@ export function ChatsPage({
 
       return [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
     });
-    saveSession(next);
+    void saveSession(next);
   }, []);
 
   const createSession = useCallback((): Session => {
@@ -385,7 +385,7 @@ export function ChatsPage({
 
   const handleDeleteCurrentSession = useCallback(() => {
     if (!sessionToDelete) return;
-    deleteSession(sessionToDelete.id);
+    void deleteSession(sessionToDelete.id);
     setSessions((prev) =>
       prev.filter((session) => session.id !== sessionToDelete.id),
     );
@@ -423,7 +423,7 @@ export function ChatsPage({
   }, []);
 
   const handleRenameSession = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!sessionToRename) return;
 
@@ -433,7 +433,7 @@ export function ChatsPage({
         return;
       }
 
-      const updatedSession = renameSession(sessionToRename.id, nextTitle);
+      const updatedSession = await renameSession(sessionToRename.id, nextTitle);
       if (!updatedSession) {
         toast.error('Rename failed');
         return;

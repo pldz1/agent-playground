@@ -51,7 +51,7 @@ export function SettingsPage({
 
   const persistSettings = (next: AppSettings) => {
     setSettings(next);
-    saveSettings(next);
+    void saveSettings(next);
     onSettingsChange(next);
   };
 
@@ -176,7 +176,7 @@ export function SettingsPage({
   };
 
   const handleClearAllData = () => {
-    clearAllSessions();
+    void clearAllSessions();
     toast.success("All sessions cleared");
   };
 
