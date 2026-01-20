@@ -1,4 +1,4 @@
-import type { ImageInput, IntentName, ToolRunOutput } from "./executor";
+import type { ImageInput, IntentName, ToolRunOutput } from './executor';
 import type {
   AgentInput,
   AgentOutput,
@@ -6,17 +6,17 @@ import type {
   PlanStep,
   ToolName,
   ToolOutput,
-} from "@/types";
+} from '@/types';
 
-import { route } from "./router";
-import { Executor } from "./executor";
+import { route } from './router';
+import { Executor } from './executor';
 
 const PLAN_DESCRIPTIONS: Record<IntentName, string> = {
-  chat: "Chat message response",
-  reasoning: "Deep reasoning analysis",
-  webSearch: "Perform web search",
-  image_generate: "Generate image",
-  image_understand: "Understand image content",
+  chat: 'Chat message response',
+  reasoning: 'Deep reasoning analysis',
+  webSearch: 'Perform web search',
+  image_generate: 'Generate image',
+  image_understand: 'Understand image content',
 };
 
 function toPlan(plan: IntentName[] = []): PlanStep[] {
@@ -36,25 +36,25 @@ function toToolOutput({
   index: number;
   inputText: string;
 }): ToolOutput {
-  const base: Pick<ToolOutput, "stepId" | "tool"> = {
+  const base: Pick<ToolOutput, 'stepId' | 'tool'> = {
     stepId: `step-${index}`,
     tool: output.step as ToolName,
   };
 
-  if ("error" in output) {
+  if ('error' in output) {
     return {
       ...base,
-      status: "fail",
+      status: 'fail',
       data: null,
       error: output.error,
     };
   }
 
   switch (output.step) {
-    case "webSearch":
+    case 'webSearch':
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: {
           query: inputText,
           output_text: output.web?.output_text,
@@ -62,38 +62,36 @@ function toToolOutput({
           raw: output.web,
         },
       };
-    case "reasoning":
+    case 'reasoning':
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: {
           answer: {
-            text: output.answer?.text ?? "",
+            text: output.answer?.text ?? '',
           },
           raw: output.answer,
         },
       };
-    case "chat":
+    case 'chat':
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: {
           message: {
-            text: output.answer?.text ?? "",
+            text: output.answer?.text ?? '',
           },
           raw: output.answer,
         },
       };
-    case "image_generate": {
-      const candidates = Array.isArray(output.result?.data?.data)
-        ? output.result.data.data
-        : [];
+    case 'image_generate': {
+      const candidates = Array.isArray(output.result?.data?.data) ? output.result.data.data : [];
       const images = candidates
         .map((candidate: any) => {
-          if (typeof candidate?.b64_json === "string") {
+          if (typeof candidate?.b64_json === 'string') {
             return `data:image/png;base64,${candidate.b64_json}`;
           }
-          if (typeof candidate?.url === "string") {
+          if (typeof candidate?.url === 'string') {
             return candidate.url;
           }
           return null;
@@ -102,7 +100,7 @@ function toToolOutput({
 
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: {
           prompt: inputText,
           images,
@@ -110,65 +108,65 @@ function toToolOutput({
         },
       };
     }
-    case "image_understand":
+    case 'image_understand':
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: {
-          caption: "Image understanding result",
-          description: output.result?.text ?? "",
+          caption: 'Image understanding result',
+          description: output.result?.text ?? '',
           raw: output.result,
         },
       };
     default:
       return {
         ...base,
-        status: "success",
+        status: 'success',
         data: output,
       };
   }
 }
 
 function pickFinalAnswer(outputs: ToolRunOutput[]): string {
-  if (!outputs.length) return "";
+  if (!outputs.length) return '';
 
   for (let i = outputs.length - 1; i >= 0; i -= 1) {
     const current = outputs[i];
 
-    if ("error" in current) {
+    if ('error' in current) {
       return current.error;
     }
 
-    if (current.step === "chat" && current.answer?.text) {
+    if (current.step === 'chat' && current.answer?.text) {
       return current.answer.text;
     }
 
-    if (current.step === "reasoning" && current.answer?.text) {
+    if (current.step === 'reasoning' && current.answer?.text) {
       return current.answer.text;
     }
 
-    if (current.step === "webSearch" && current.web?.output_text) {
+    if (current.step === 'webSearch' && current.web?.output_text) {
       return current.web.output_text;
     }
 
-    if (current.step === "image_understand" && current.result?.text) {
+    if (current.step === 'image_understand' && current.result?.text) {
       return current.result.text;
     }
 
-    if (current.step === "image_generate") {
+    if (current.step === 'image_generate') {
       return `![image-${current.result.data.created}](${current.result.data.data[0].b64_json})`;
     }
   }
 
-  return "";
+  return '';
 }
 
-function parseImageInput(image?: AgentInput["image"]): ImageInput | undefined {
+function parseImageInput(image?: AgentInput['image']): ImageInput | undefined {
   if (!image) return undefined;
 
-  if (typeof image === "string") {
-    if (image.startsWith("data:")) {
-      const [meta, base64] = image.split(",", 2);
+  if (typeof image === 'string') {
+    if (image.startsWith('data:')) {
+      const [meta, base64] = image.split(',', 2);
       const mimeMatch = meta.match(/^data:(.*?);base64$/);
       return {
         data: base64,
@@ -200,7 +198,7 @@ export class CoreAgent {
     input: string;
     image?: ImageInput;
     onProgress?: (event: AgentProgressEvent) => void;
-    history?: AgentInput["history"];
+    history?: AgentInput['history'];
   }): Promise<{
     routing: any;
     plan: any;
@@ -209,10 +207,10 @@ export class CoreAgent {
     image?: ImageInput;
     web: any;
   }> {
-    onProgress?.({ type: "route:start" });
+    onProgress?.({ type: 'route:start' });
     const routing = await route({ input, hasImage: Boolean(image) });
     onProgress?.({
-      type: "route:complete",
+      type: 'route:complete',
       intents: Array.isArray(routing.intents) ? routing.intents : [],
     });
     const result = await this.executor.run({
@@ -246,12 +244,8 @@ export class Agent {
       history: input.history,
     });
 
-    const plan = Array.isArray(result.plan)
-      ? (result.plan as IntentName[])
-      : [];
-    const outputs = Array.isArray(result.outputs)
-      ? (result.outputs as ToolRunOutput[])
-      : [];
+    const plan = Array.isArray(result.plan) ? (result.plan as IntentName[]) : [];
+    const outputs = Array.isArray(result.outputs) ? (result.outputs as ToolRunOutput[]) : [];
     const intents = Array.isArray(result.routing?.intents)
       ? (result.routing.intents as IntentName[])
       : [];
@@ -262,7 +256,7 @@ export class Agent {
       },
       plan: toPlan(plan),
       toolOutputs: outputs.map((output, index) =>
-        toToolOutput({ output, index, inputText: input.text })
+        toToolOutput({ output, index, inputText: input.text }),
       ),
       answer: pickFinalAnswer(outputs),
     };

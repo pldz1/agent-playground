@@ -114,7 +114,7 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
           className="hidden"
           onChange={handleFileChange}
         />
-        
+
         <Button
           variant="outline"
           size="icon"
@@ -129,7 +129,10 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder ?? 'Enter your question... (Press Enter to send / Shift+Enter for a new line)'}
+          placeholder={
+            placeholder ??
+            'Enter your question... (Press Enter to send / Shift+Enter for a new line)'
+          }
           className="min-h-[60px] max-h-[200px] resize-none disabled:bg-[#F5F6F8] disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
           disabled={disabled}
         />
@@ -142,7 +145,7 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
           <Send className="size-4" />
         </Button>
       </div>
-      
+
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
         Enter to send • Shift+Enter for a new line • Supports dragging and dropping images
       </p>

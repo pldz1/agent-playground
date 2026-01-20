@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
-import type { AppSettings } from "@/types";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
+import { useEffect, useState } from 'react';
+import type { AppSettings } from '@/types';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../../components/ui/collapsible";
-import { Label } from "../../components/ui/label";
+} from '../../components/ui/collapsible';
+import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from '../../components/ui/select';
 import {
   Table,
   TableBody,
@@ -22,13 +22,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../../components/ui/tooltip";
-import { Slider } from "../../components/ui/slider";
+} from '../../components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip';
+import { Slider } from '../../components/ui/slider';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,21 +35,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../components/ui/alert-dialog";
+} from '../../components/ui/alert-dialog';
 import {
   MODEL_SELECT_COPY,
   CAPABILITY_METADATA,
   MODEL_CAPABILITY_REQUIREMENTS,
   type ModelSettingKey,
-} from "./utils";
+} from './utils';
 import {
   getCapabilityLabel,
   getEligibleModelsForSetting,
   getProviderOption,
   inferProviderPreset,
   maskApiKey,
-} from "./utils";
-import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+} from './utils';
+import { ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
 
 interface ChatAgentSectionProps {
   settings: AppSettings;
@@ -74,8 +70,8 @@ export function ChatAgentSection({
 }: ChatAgentSectionProps) {
   const [routingOpen, setRoutingOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(true);
-  const [contextLengthDraft, setContextLengthDraft] = useState(
-    () => Math.max(1, settings.chatContextLength || 1)
+  const [contextLengthDraft, setContextLengthDraft] = useState(() =>
+    Math.max(1, settings.chatContextLength || 1),
   );
 
   useEffect(() => {
@@ -100,8 +96,7 @@ export function ChatAgentSection({
                   Chat Task Routing
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Choose which configured model handles each stage of the agent
-                  pipeline.
+                  Choose which configured model handles each stage of the agent pipeline.
                 </p>
               </div>
               <CollapsibleTrigger asChild>
@@ -110,9 +105,7 @@ export function ChatAgentSection({
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
                 >
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform ${
-                      routingOpen ? "" : "-rotate-90"
-                    }`}
+                    className={`h-4 w-4 transition-transform ${routingOpen ? '' : '-rotate-90'}`}
                   />
                 </button>
               </CollapsibleTrigger>
@@ -124,8 +117,7 @@ export function ChatAgentSection({
                   Conversation Memory
                 </Label>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Controls how many previous messages are sent to the chat
-                  model for each reply.
+                  Controls how many previous messages are sent to the chat model for each reply.
                 </p>
                 <div className="mt-3 flex flex-col gap-3">
                   <Slider
@@ -137,68 +129,57 @@ export function ChatAgentSection({
                   />
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {contextLengthDraft} message
-                    {contextLengthDraft === 1 ? "" : "s"}
+                    {contextLengthDraft === 1 ? '' : 's'}
                   </span>
                 </div>
               </div>
               <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-gray-800 dark:border-gray-800">
-                {(Object.keys(MODEL_SELECT_COPY) as ModelSettingKey[]).map(
-                  (key) => {
-                    const eligibleModels = getEligibleModelsForSetting(
-                      key,
-                      settings.models
-                    );
-                    const hasEligibleModels = eligibleModels.length > 0;
-                    const requiredCapability =
-                      MODEL_CAPABILITY_REQUIREMENTS[key];
-                    const capabilityLabel = requiredCapability
-                      ? getCapabilityLabel(requiredCapability)
-                      : null;
-                    return (
-                      <div
-                        key={key}
-                        className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {MODEL_SELECT_COPY[key].label}
-                          </Label>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {MODEL_SELECT_COPY[key].description}
+                {(Object.keys(MODEL_SELECT_COPY) as ModelSettingKey[]).map((key) => {
+                  const eligibleModels = getEligibleModelsForSetting(key, settings.models);
+                  const hasEligibleModels = eligibleModels.length > 0;
+                  const requiredCapability = MODEL_CAPABILITY_REQUIREMENTS[key];
+                  const capabilityLabel = requiredCapability
+                    ? getCapabilityLabel(requiredCapability)
+                    : null;
+                  return (
+                    <div
+                      key={key}
+                      className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div>
+                        <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {MODEL_SELECT_COPY[key].label}
+                        </Label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {MODEL_SELECT_COPY[key].description}
+                        </p>
+                        {!hasEligibleModels && (
+                          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                            {capabilityLabel
+                              ? `No configured models support the ${capabilityLabel.toLowerCase()} capability.`
+                              : 'Add a model to enable selection.'}
                           </p>
-                          {!hasEligibleModels && (
-                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                              {capabilityLabel
-                                ? `No configured models support the ${capabilityLabel.toLowerCase()} capability.`
-                                : "Add a model to enable selection."}
-                            </p>
-                          )}
-                        </div>
-                        <Select
-                          value={settings[key] || undefined}
-                          onValueChange={(value) =>
-                            onModelSelectionChange(key, value)
-                          }
-                          disabled={!hasEligibleModels}
-                        >
-                          <SelectTrigger className="w-full md:w-[240px]">
-                            <SelectValue placeholder="Select a model" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {eligibleModels.map((model) => (
-                              <SelectItem
-                                key={`${key}-${model.label}`}
-                                value={model.label}
-                              >
-                                {model.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        )}
                       </div>
-                    );
-                  }
-                )}
+                      <Select
+                        value={settings[key] || undefined}
+                        onValueChange={(value) => onModelSelectionChange(key, value)}
+                        disabled={!hasEligibleModels}
+                      >
+                        <SelectTrigger className="w-full md:w-[240px]">
+                          <SelectValue placeholder="Select a model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {eligibleModels.map((model) => (
+                            <SelectItem key={`${key}-${model.label}`} value={model.label}>
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
               </div>
             </CollapsibleContent>
           </div>
@@ -214,16 +195,11 @@ export function ChatAgentSection({
                   Model Library
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Central place to manage provider credentials, capabilities,
-                  and availability.
+                  Central place to manage provider credentials, capabilities, and availability.
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  onClick={onOpenCreateDrawer}
-                  size="sm"
-                  variant="outline"
-                >
+                <Button onClick={onOpenCreateDrawer} size="sm" variant="outline">
                   <Plus className="mr-2 h-4 w-4" /> Add Model
                 </Button>
                 <CollapsibleTrigger asChild>
@@ -232,9 +208,7 @@ export function ChatAgentSection({
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
                   >
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        libraryOpen ? "" : "-rotate-90"
-                      }`}
+                      className={`h-4 w-4 transition-transform ${libraryOpen ? '' : '-rotate-90'}`}
                     />
                   </button>
                 </CollapsibleTrigger>
@@ -266,9 +240,7 @@ export function ChatAgentSection({
                       </TableRow>
                     ) : (
                       settings.models.map((model) => {
-                        const preset = getProviderOption(
-                          inferProviderPreset(model)
-                        );
+                        const preset = getProviderOption(inferProviderPreset(model));
                         return (
                           <TableRow key={model.label}>
                             <TableCell>
@@ -283,34 +255,30 @@ export function ChatAgentSection({
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {preset ? (
-                                  <preset.icon className="h-4 w-4 text-gray-500" />
-                                ) : null}
+                                {preset ? <preset.icon className="h-4 w-4 text-gray-500" /> : null}
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                  {model.provider || "—"}
+                                  {model.provider || '—'}
                                 </span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {CAPABILITY_METADATA.map(
-                                  ({ key, icon: Icon, label }) => (
-                                    <Tooltip key={`${model.label}-${key}`}>
-                                      <TooltipTrigger asChild>
-                                        <span
-                                          className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${
-                                            model.capabilities[key]
-                                              ? "border-indigo-500 bg-indigo-500/10 text-indigo-500"
-                                              : "border-gray-200 text-gray-400 dark:border-gray-700"
-                                          }`}
-                                        >
-                                          <Icon className="h-4 w-4" />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>{label}</TooltipContent>
-                                    </Tooltip>
-                                  )
-                                )}
+                                {CAPABILITY_METADATA.map(({ key, icon: Icon, label }) => (
+                                  <Tooltip key={`${model.label}-${key}`}>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${
+                                          model.capabilities[key]
+                                            ? 'border-indigo-500 bg-indigo-500/10 text-indigo-500'
+                                            : 'border-gray-200 text-gray-400 dark:border-gray-700'
+                                        }`}
+                                      >
+                                        <Icon className="h-4 w-4" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{label}</TooltipContent>
+                                  </Tooltip>
+                                ))}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -318,16 +286,12 @@ export function ChatAgentSection({
                                 <TooltipTrigger asChild>
                                   <span className="text-sm text-gray-700 dark:text-gray-300">
                                     {model.baseUrl
-                                      ? model.baseUrl
-                                          .replace(/^https?:\/\//, "")
-                                          .slice(0, 28) +
-                                        (model.baseUrl.length > 28 ? "…" : "")
-                                      : "Not set"}
+                                      ? model.baseUrl.replace(/^https?:\/\//, '').slice(0, 28) +
+                                        (model.baseUrl.length > 28 ? '…' : '')
+                                      : 'Not set'}
                                   </span>
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                  {model.baseUrl || "—"}
-                                </TooltipContent>
+                                <TooltipContent>{model.baseUrl || '—'}</TooltipContent>
                               </Tooltip>
                             </TableCell>
                             <TableCell className="text-sm text-gray-700 dark:text-gray-300">
@@ -355,22 +319,16 @@ export function ChatAgentSection({
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Remove {model.label}?
-                                      </AlertDialogTitle>
+                                      <AlertDialogTitle>Remove {model.label}?</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        This model will no longer be available
-                                        for routing selections.
+                                        This model will no longer be available for routing
+                                        selections.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancel
-                                      </AlertDialogCancel>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
                                       <AlertDialogAction
-                                        onClick={() =>
-                                          onDeleteModel(model.label)
-                                        }
+                                        onClick={() => onDeleteModel(model.label)}
                                         className="bg-red-600 hover:bg-red-700"
                                       >
                                         Remove

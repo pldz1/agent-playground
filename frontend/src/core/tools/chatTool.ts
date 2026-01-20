@@ -1,10 +1,9 @@
-import { resolveAuth } from "../config";
-import { logger } from "../logger";
-import { getOpenAIClient } from "./openaiClient";
-import type { AgentHistoryMessage } from "@/types";
+import { resolveAuth } from '../config';
+import { logger } from '../logger';
+import { getOpenAIClient } from './openaiClient';
+import type { AgentHistoryMessage } from '@/types';
 
-const now = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export class ChatTool {
   /**
@@ -22,27 +21,25 @@ export class ChatTool {
     model?: string;
     history?: AgentHistoryMessage[];
   }) {
-    const auth = resolveAuth("chat");
+    const auth = resolveAuth('chat');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
     const started = now();
 
-    logger.debug("ChatTool.reply:start", {
+    logger.debug('ChatTool.reply:start', {
       modelName,
       provider: auth.model.provider,
     });
 
     const messages: {
-      role: "system" | "user" | "assistant";
+      role: 'system' | 'user' | 'assistant';
       content: string;
     }[] = [];
 
     if (context) {
       messages.push({
-        role: "system",
-        content: `Context (web search results, if any):\n${JSON.stringify(
-          context
-        )}`,
+        role: 'system',
+        content: `Context (web search results, if any):\n${JSON.stringify(context)}`,
       });
     }
 
@@ -50,7 +47,7 @@ export class ChatTool {
       history
         .filter(
           (entry): entry is AgentHistoryMessage =>
-            Boolean(entry?.content) && (entry?.role === "user" || entry?.role === "assistant")
+            Boolean(entry?.content) && (entry?.role === 'user' || entry?.role === 'assistant'),
         )
         .forEach((entry) => {
           messages.push({
@@ -60,7 +57,7 @@ export class ChatTool {
         });
     }
 
-    messages.push({ role: "user", content: input });
+    messages.push({ role: 'user', content: input });
 
     try {
       const completion = await client.agent.completions.create({
@@ -69,17 +66,17 @@ export class ChatTool {
       });
 
       const duration = Math.round(now() - started);
-      logger.debug("ChatTool.reply:success", {
+      logger.debug('ChatTool.reply:success', {
         modelName,
         durationMs: duration,
       });
 
       return {
-        text: completion.choices?.[0]?.message?.content ?? "",
+        text: completion.choices?.[0]?.message?.content ?? '',
         choice: completion.choices?.[0],
       };
     } catch (error) {
-      logger.error("ChatTool.reply:error", {
+      logger.error('ChatTool.reply:error', {
         modelName,
         error: error instanceof Error ? error.message : String(error),
       });

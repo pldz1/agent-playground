@@ -2,15 +2,7 @@ import { useState } from 'react';
 import type { ToolOutput } from '@/types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-} from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { copyToClipboard } from '../helpers/export';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
@@ -129,23 +121,15 @@ export function StepCard({ output }: StepCardProps) {
       case 'image_understand':
         return (
           <div className="space-y-2">
-            {output.data?.caption && (
-              <p className="text-sm font-medium">{output.data.caption}</p>
-            )}
+            {output.data?.caption && <p className="text-sm font-medium">{output.data.caption}</p>}
             {output.data?.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {output.data.description}
-              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{output.data.description}</p>
             )}
           </div>
         );
 
       default:
-        return (
-          <div className="text-sm text-gray-500">
-            Output data available in raw JSON
-          </div>
-        );
+        return <div className="text-sm text-gray-500">Output data available in raw JSON</div>;
     }
   };
 
@@ -156,26 +140,16 @@ export function StepCard({ output }: StepCardProps) {
         <div className="flex items-center gap-3">
           {getStatusIcon()}
           <div>
-            <h4 className="text-sm font-medium text-[#0F172A] dark:text-white">
-              {output.tool}
-            </h4>
-            {output.duration && (
-              <p className="text-xs text-gray-500">
-                {output.duration}ms
-              </p>
-            )}
+            <h4 className="text-sm font-medium text-[#0F172A] dark:text-white">{output.tool}</h4>
+            {output.duration && <p className="text-xs text-gray-500">{output.duration}ms</p>}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={handleCopy}>
             <Copy className="size-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setRawVisible(!rawVisible)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setRawVisible(!rawVisible)}>
             {rawVisible ? 'Hide' : 'View'} raw
           </Button>
         </div>
@@ -189,16 +163,12 @@ export function StepCard({ output }: StepCardProps) {
       )}
 
       {/* Body */}
-      {output.status === 'success' && (
-        <div className="mb-3">{renderToolOutput()}</div>
-      )}
+      {output.status === 'success' && <div className="mb-3">{renderToolOutput()}</div>}
 
       {/* Raw JSON */}
       {rawVisible && (
         <div className="mt-3 p-3 bg-gray-900 dark:bg-black rounded-lg overflow-x-auto">
-          <pre className="text-xs text-gray-100">
-            {JSON.stringify(output.data, null, 2)}
-          </pre>
+          <pre className="text-xs text-gray-100">{JSON.stringify(output.data, null, 2)}</pre>
         </div>
       )}
     </Card>

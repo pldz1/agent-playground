@@ -42,13 +42,9 @@ export function ChatProgress({ entries }: ChatProgressProps) {
           <div key={entry.id} className="flex items-start gap-3">
             <div className="mt-1">{getStatusIcon(entry.status)}</div>
             <div>
-              <p className="text-sm font-medium text-[#0F172A] dark:text-white">
-                {entry.label}
-              </p>
+              <p className="text-sm font-medium text-[#0F172A] dark:text-white">{entry.label}</p>
               {entry.detail && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {entry.detail}
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{entry.detail}</p>
               )}
             </div>
           </div>

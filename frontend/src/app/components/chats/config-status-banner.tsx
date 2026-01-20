@@ -9,11 +9,7 @@ interface ConfigStatusBannerProps {
 const CONFIG_BANNER_TEXT =
   'The AI ​​model configuration is not yet complete, unable to respond to messages.';
 
-export function ConfigStatusBanner({
-  showDebug,
-  debugLines,
-  onNavigate,
-}: ConfigStatusBannerProps) {
+export function ConfigStatusBanner({ showDebug, debugLines, onNavigate }: ConfigStatusBannerProps) {
   return (
     <div className="rounded-lg border border-[#F2C166]/60 bg-[#FFF7E6] px-4 py-3 text-[#8B5E21] shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

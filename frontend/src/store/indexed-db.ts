@@ -1,15 +1,15 @@
-const DB_NAME = "ai-agent-store";
+const DB_NAME = 'ai-agent-store';
 const DB_VERSION = 1;
-const STORE_NAME = "keyvalue";
+const STORE_NAME = 'keyvalue';
 
-const hasIndexedDb = typeof indexedDB !== "undefined";
+const hasIndexedDb = typeof indexedDB !== 'undefined';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 const memoryStore = new Map<string, string>();
 
 const openDatabase = async (): Promise<IDBDatabase> => {
   if (!hasIndexedDb) {
-    throw new Error("IndexedDB is not available in this environment.");
+    throw new Error('IndexedDB is not available in this environment.');
   }
 
   if (!dbPromise) {
@@ -26,7 +26,7 @@ const openDatabase = async (): Promise<IDBDatabase> => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => {
         dbPromise = null;
-        reject(request.error ?? new Error("Failed to open IndexedDB database."));
+        reject(request.error ?? new Error('Failed to open IndexedDB database.'));
       };
     });
   }
@@ -42,7 +42,7 @@ export const getItem = async (key: string): Promise<string | null> => {
   const db = await openDatabase();
 
   return new Promise<string | null>((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readonly");
+    const transaction = db.transaction(STORE_NAME, 'readonly');
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(key);
 
@@ -65,7 +65,7 @@ export const setItem = async (key: string, value: string): Promise<void> => {
   const db = await openDatabase();
 
   return new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite");
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
     store.put(value, key);
 
@@ -88,7 +88,7 @@ export const removeItem = async (key: string): Promise<void> => {
   const db = await openDatabase();
 
   return new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite");
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
     store.delete(key);
 

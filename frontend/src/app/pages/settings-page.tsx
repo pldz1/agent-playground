@@ -1,17 +1,17 @@
-import { useMemo, useState } from "react";
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Label } from "../components/ui/label";
+import { useMemo, useState } from 'react';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/select";
-import { toast } from "sonner";
-import { clearAllSessions, getSettings, saveSettings } from "@/store";
-import type { AppSettings, ModelConfig } from "@/types";
-import { copyToClipboard } from "../helpers/export";
+} from '../components/ui/select';
+import { toast } from 'sonner';
+import { clearAllSessions, getSettings, saveSettings } from '@/store';
+import type { AppSettings, ModelConfig } from '@/types';
+import { copyToClipboard } from '../helpers/export';
 import {
   SETTINGS_SECTIONS,
   type ModelSettingKey,
@@ -20,34 +20,27 @@ import {
   createDefaultFormState,
   createFormStateFromModel,
   getEligibleModelsForSetting,
-} from "../components/settings/utils";
+} from '../components/settings/utils';
 
-import { SettingsSidebar } from "../components/settings/settings-sidebar";
-import { GeneralSettingsSection } from "../components/settings/general-settings-section";
-import { ChatAgentSection } from "../components/settings/chat-agent-section";
-import { DataManagementSection } from "../components/settings/data-management-section";
-import { ModelDrawer } from "../components/settings/model-drawer";
+import { SettingsSidebar } from '../components/settings/settings-sidebar';
+import { GeneralSettingsSection } from '../components/settings/general-settings-section';
+import { ChatAgentSection } from '../components/settings/chat-agent-section';
+import { DataManagementSection } from '../components/settings/data-management-section';
+import { ModelDrawer } from '../components/settings/model-drawer';
 
 interface SettingsPageProps {
   onSettingsChange: (settings: AppSettings) => void;
-  theme: "light" | "dark";
-  onThemeChange: (theme: "light" | "dark") => void;
+  theme: 'light' | 'dark';
+  onThemeChange: (theme: 'light' | 'dark') => void;
 }
 
-export function SettingsPage({
-  onSettingsChange,
-  theme,
-  onThemeChange,
-}: SettingsPageProps) {
+export function SettingsPage({ onSettingsChange, theme, onThemeChange }: SettingsPageProps) {
   const initialSettings = useMemo(() => getSettings(), []);
   const [settings, setSettings] = useState<AppSettings>(initialSettings);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
-  const [modelForm, setModelForm] = useState<ModelFormState>(
-    createDefaultFormState
-  );
-  const [activeSection, setActiveSection] =
-    useState<SettingsSectionId>("general");
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
+  const [modelForm, setModelForm] = useState<ModelFormState>(createDefaultFormState);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>('general');
 
   const persistSettings = (next: AppSettings) => {
     setSettings(next);
@@ -55,10 +48,7 @@ export function SettingsPage({
     onSettingsChange(next);
   };
 
-  const handleSettingChange = <K extends keyof AppSettings>(
-    key: K,
-    value: AppSettings[K]
-  ) => {
+  const handleSettingChange = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     const next = { ...settings, [key]: value };
     persistSettings(next);
   };
@@ -67,7 +57,7 @@ export function SettingsPage({
     const eligible = getEligibleModelsForSetting(key, settings.models);
     const isEligible = eligible.some((model) => model.label === value);
     if (!isEligible) {
-      toast.error("This model does not support the required capability");
+      toast.error('This model does not support the required capability');
       return;
     }
     handleSettingChange(key, value);
@@ -75,35 +65,26 @@ export function SettingsPage({
 
   const handleModelsChange = (models: ModelConfig[]) => {
     const ensureSelection = (key: ModelSettingKey, current: string) => {
-      if (!current) return "";
+      if (!current) return '';
       const eligible = getEligibleModelsForSetting(key, models);
-      return eligible.some((model) => model.label === current) ? current : "";
+      return eligible.some((model) => model.label === current) ? current : '';
     };
 
     const next: AppSettings = {
       ...settings,
       models,
-      routingModel: ensureSelection("routingModel", settings.routingModel),
-      reasoningModel: ensureSelection(
-        "reasoningModel",
-        settings.reasoningModel
-      ),
-      chatModel: ensureSelection("chatModel", settings.chatModel),
-      webSearchModel: ensureSelection(
-        "webSearchModel",
-        settings.webSearchModel
-      ),
-      imageModel: ensureSelection(
-        "imageModel",
-        settings.imageModel
-      ),
+      routingModel: ensureSelection('routingModel', settings.routingModel),
+      reasoningModel: ensureSelection('reasoningModel', settings.reasoningModel),
+      chatModel: ensureSelection('chatModel', settings.chatModel),
+      webSearchModel: ensureSelection('webSearchModel', settings.webSearchModel),
+      imageModel: ensureSelection('imageModel', settings.imageModel),
     };
 
     persistSettings(next);
   };
 
   const openCreateDrawer = () => {
-    setDrawerMode("create");
+    setDrawerMode('create');
     setModelForm(createDefaultFormState());
     setDrawerOpen(true);
   };
@@ -111,7 +92,7 @@ export function SettingsPage({
   const openEditDrawer = (modelLabel: string) => {
     const target = settings.models.find((model) => model.label === modelLabel);
     if (!target) return;
-    setDrawerMode("edit");
+    setDrawerMode('edit');
     setModelForm(createFormStateFromModel(target));
     setDrawerOpen(true);
   };
@@ -126,35 +107,33 @@ export function SettingsPage({
       capabilities: { ...form.capabilities },
     };
 
-    if (drawerMode === "edit") {
+    if (drawerMode === 'edit') {
       const updated = settings.models.map((model) =>
-        model.label === form.label ? payload : model
+        model.label === form.label ? payload : model,
       );
       handleModelsChange(updated);
-      toast.success("Model updated");
+      toast.success('Model updated');
       return;
     }
 
-    const exists = settings.models.some(
-      (model) => model.label === payload.label
-    );
+    const exists = settings.models.some((model) => model.label === payload.label);
     if (exists) {
-      toast.error("A model with this identifier already exists");
+      toast.error('A model with this identifier already exists');
       return;
     }
     handleModelsChange([...settings.models, payload]);
-    toast.success("Model added");
+    toast.success('Model added');
   };
 
   const handleSaveModel = () => {
     const trimmedName = modelForm.name.trim();
     if (!trimmedName) {
-      toast.error("Please provide a model");
+      toast.error('Please provide a model');
       return;
     }
 
     if (!modelForm.label.trim()) {
-      toast.error("Please provide a display name");
+      toast.error('Please provide a display name');
       return;
     }
 
@@ -163,44 +142,35 @@ export function SettingsPage({
   };
 
   const handleDeleteModel = (modelLabel: string) => {
-    const remaining = settings.models.filter(
-      (model) => model.label !== modelLabel
-    );
+    const remaining = settings.models.filter((model) => model.label !== modelLabel);
     handleModelsChange(remaining);
-    toast.success("Model removed");
+    toast.success('Model removed');
   };
 
   const handleCopyConfig = () => {
     copyToClipboard(JSON.stringify(settings, null, 2));
-    toast.success("Configuration copied to clipboard");
+    toast.success('Configuration copied to clipboard');
   };
 
   const handleClearAllData = () => {
     void clearAllSessions();
-    toast.success("All sessions cleared");
+    toast.success('All sessions cleared');
   };
 
-  const activeSectionMeta = SETTINGS_SECTIONS.find(
-    (section) => section.id === activeSection
-  );
+  const activeSectionMeta = SETTINGS_SECTIONS.find((section) => section.id === activeSection);
 
   return (
     <div className="flex h-full overflow-hidden">
-      <SettingsSidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-      />
+      <SettingsSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
 
       <div className="flex-1">
         <ScrollArea className="h-full">
           <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
-                Settings
-              </h1>
+              <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">Settings</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Tune agent behaviour, route tasks to the right models, and
-                manage provider credentials.
+                Tune agent behaviour, route tasks to the right models, and manage provider
+                credentials.
               </p>
             </div>
 
@@ -210,9 +180,7 @@ export function SettingsPage({
               </Label>
               <Select
                 value={activeSection}
-                onValueChange={(value) =>
-                  setActiveSection(value as SettingsSectionId)
-                }
+                onValueChange={(value) => setActiveSection(value as SettingsSectionId)}
               >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Select a settings category." />
@@ -235,7 +203,7 @@ export function SettingsPage({
               </div>
             ) : null}
 
-            {activeSection === "general" && (
+            {activeSection === 'general' && (
               <GeneralSettingsSection
                 settings={settings}
                 onSettingChange={handleSettingChange}
@@ -244,20 +212,18 @@ export function SettingsPage({
               />
             )}
 
-            {activeSection === "chatAgent" && (
+            {activeSection === 'chatAgent' && (
               <ChatAgentSection
                 settings={settings}
                 onModelSelectionChange={handleModelSelectionChange}
                 onOpenCreateDrawer={openCreateDrawer}
                 onOpenEditDrawer={openEditDrawer}
                 onDeleteModel={handleDeleteModel}
-                onContextLengthChange={(value) =>
-                  handleSettingChange("chatContextLength", value)
-                }
+                onContextLengthChange={(value) => handleSettingChange('chatContextLength', value)}
               />
             )}
 
-            {activeSection === "data" && (
+            {activeSection === 'data' && (
               <DataManagementSection
                 onCopyConfig={handleCopyConfig}
                 onClearAllData={handleClearAllData}

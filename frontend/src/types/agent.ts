@@ -1,11 +1,6 @@
-export type ToolName =
-  | "webSearch"
-  | "reasoning"
-  | "chat"
-  | "image_generate"
-  | "image_understand";
+export type ToolName = 'webSearch' | 'reasoning' | 'chat' | 'image_generate' | 'image_understand';
 
-export type StepStatus = "pending" | "running" | "success" | "fail";
+export type StepStatus = 'pending' | 'running' | 'success' | 'fail';
 
 export interface Intent {
   name: string;
@@ -60,7 +55,7 @@ export interface ToolOutput {
 }
 
 export interface AgentHistoryMessage {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -70,13 +65,13 @@ export interface AgentPlanProgressStep {
 }
 
 export type AgentProgressEvent =
-  | { type: "route:start" }
-  | { type: "route:complete"; intents: string[] }
-  | { type: "plan:ready"; steps: AgentPlanProgressStep[] }
-  | { type: "step:start"; step: AgentPlanProgressStep }
-  | { type: "step:complete"; step: AgentPlanProgressStep }
-  | { type: "step:error"; step: AgentPlanProgressStep; error: string }
-  | { type: "complete" };
+  | { type: 'route:start' }
+  | { type: 'route:complete'; intents: string[] }
+  | { type: 'plan:ready'; steps: AgentPlanProgressStep[] }
+  | { type: 'step:start'; step: AgentPlanProgressStep }
+  | { type: 'step:complete'; step: AgentPlanProgressStep }
+  | { type: 'step:error'; step: AgentPlanProgressStep; error: string }
+  | { type: 'complete' };
 
 export interface AgentInput {
   text: string;
@@ -94,7 +89,7 @@ export interface AgentOutput {
 
 export interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   images?: string[];
   timestamp: number;
@@ -112,4 +107,4 @@ export interface Session {
   status: SessionStatus;
 }
 
-export type SessionStatus = "idle" | "running" | "error";
+export type SessionStatus = 'idle' | 'running' | 'error';

@@ -1,27 +1,18 @@
-import { resolveAuth } from "../config";
-import { logger } from "../logger";
-import { reasoningPrompt } from "../prompts/reasoningPrompt";
-import { getOpenAIClient } from "./openaiClient";
+import { resolveAuth } from '../config';
+import { logger } from '../logger';
+import { reasoningPrompt } from '../prompts/reasoningPrompt';
+import { getOpenAIClient } from './openaiClient';
 
-const now = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export class ReasoningTool {
-  async think({
-    input,
-    context,
-    model,
-  }: {
-    input: string;
-    context?: any;
-    model?: string;
-  }) {
-    const auth = resolveAuth("reasoning");
+  async think({ input, context, model }: { input: string; context?: any; model?: string }) {
+    const auth = resolveAuth('reasoning');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
     const started = now();
 
-    logger.debug("ReasoningTool.think:start", {
+    logger.debug('ReasoningTool.think:start', {
       modelName,
       provider: auth.model.provider,
     });
@@ -29,30 +20,28 @@ export class ReasoningTool {
     try {
       const completion = await client.agent.completions.create({
         messages: [
-          { role: "system", content: reasoningPrompt },
+          { role: 'system', content: reasoningPrompt },
           {
-            role: "user",
-            content: `user: ${input}\ncontext: ${
-              context ? JSON.stringify(context) : "null"
-            }`,
+            role: 'user',
+            content: `user: ${input}\ncontext: ${context ? JSON.stringify(context) : 'null'}`,
           },
         ],
         model: modelName,
-        reasoning_effort: "medium",
+        reasoning_effort: 'medium',
       });
 
       const duration = Math.round(now() - started);
-      logger.debug("ReasoningTool.think:success", {
+      logger.debug('ReasoningTool.think:success', {
         modelName,
         durationMs: duration,
       });
 
       return {
-        text: completion.choices?.[0]?.message?.content ?? "",
+        text: completion.choices?.[0]?.message?.content ?? '',
         choice: completion.choices?.[0],
       };
     } catch (error) {
-      logger.error("ReasoningTool.think:error", {
+      logger.error('ReasoningTool.think:error', {
         modelName,
         error: error instanceof Error ? error.message : String(error),
       });

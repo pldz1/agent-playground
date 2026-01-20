@@ -1,29 +1,24 @@
-import { ChatTool } from "./tools/chatTool";
-import { WebSearchTool } from "./tools/webSearchTool";
-import { ReasoningTool } from "./tools/reasoningTool";
-import { ImageTool } from "./tools/imageTool";
+import { ChatTool } from './tools/chatTool';
+import { WebSearchTool } from './tools/webSearchTool';
+import { ReasoningTool } from './tools/reasoningTool';
+import { ImageTool } from './tools/imageTool';
 import type {
   AgentPlanProgressStep,
   AgentProgressEvent,
   AgentHistoryMessage,
   ToolName,
-} from "@/types";
+} from '@/types';
 
-export type IntentName =
-  | "chat"
-  | "webSearch"
-  | "reasoning"
-  | "image_generate"
-  | "image_understand";
+export type IntentName = 'chat' | 'webSearch' | 'reasoning' | 'image_generate' | 'image_understand';
 
 export type ImageInput = { data?: string; url?: string; mimeType?: string };
 
 export type ToolRunOutput =
-  | { step: "webSearch"; web: any }
-  | { step: "reasoning"; answer: any }
-  | { step: "chat"; answer: any }
-  | { step: "image_generate"; result: any }
-  | { step: "image_understand"; result: any }
+  | { step: 'webSearch'; web: any }
+  | { step: 'reasoning'; answer: any }
+  | { step: 'chat'; answer: any }
+  | { step: 'image_generate'; result: any }
+  | { step: 'image_understand'; result: any }
   | { step: string; error: string };
 
 export class Executor {
@@ -34,7 +29,7 @@ export class Executor {
     image: ImageTool;
   };
 
-  constructor({ tools }: { tools?: Executor["tools"] } = {}) {
+  constructor({ tools }: { tools?: Executor['tools'] } = {}) {
     this.tools =
       tools ||
       ({
@@ -42,7 +37,7 @@ export class Executor {
         webSearch: new WebSearchTool(),
         reasoning: new ReasoningTool(),
         image: new ImageTool(),
-      } satisfies Executor["tools"]);
+      } satisfies Executor['tools']);
   }
 
   async run({
@@ -65,7 +60,7 @@ export class Executor {
     }));
 
     if (planSteps.length) {
-      onProgress?.({ type: "plan:ready", steps: planSteps });
+      onProgress?.({ type: 'plan:ready', steps: planSteps });
     }
 
     let context: {
@@ -86,11 +81,11 @@ export class Executor {
       const step = plan[index];
       const stepMeta = planSteps[index];
       if (stepMeta) {
-        onProgress?.({ type: "step:start", step: stepMeta });
+        onProgress?.({ type: 'step:start', step: stepMeta });
       }
 
       try {
-        if (step === "chat") {
+        if (step === 'chat') {
           const answer = await this.tools.chat.reply({
             input,
             context: context.web,
@@ -98,50 +93,50 @@ export class Executor {
           });
           context.outputs.push({ step, answer });
           if (stepMeta) {
-            onProgress?.({ type: "step:complete", step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
 
-        if (step === "webSearch") {
+        if (step === 'webSearch') {
           const web = await this.tools.webSearch.search({ input });
           context.web = web;
           context.outputs.push({ step, web });
           if (stepMeta) {
-            onProgress?.({ type: "step:complete", step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
 
-        if (step === "reasoning") {
+        if (step === 'reasoning') {
           const answer = await this.tools.reasoning.think({
             input,
             context: context.web,
           });
           context.outputs.push({ step, answer });
           if (stepMeta) {
-            onProgress?.({ type: "step:complete", step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
 
-        if (step === "image_generate") {
+        if (step === 'image_generate') {
           const result = await this.tools.image.generate({ prompt: input });
           context.outputs.push({ step, result });
           if (stepMeta) {
-            onProgress?.({ type: "step:complete", step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
 
-        if (step === "image_understand") {
+        if (step === 'image_understand') {
           const result = await this.tools.image.understand({
             prompt: input,
             image,
           });
           context.outputs.push({ step, result });
           if (stepMeta) {
-            onProgress?.({ type: "step:complete", step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
@@ -150,7 +145,7 @@ export class Executor {
         context.outputs.push({ step, error: unknownMessage });
         if (stepMeta) {
           onProgress?.({
-            type: "step:error",
+            type: 'step:error',
             step: stepMeta,
             error: unknownMessage,
           });
@@ -159,13 +154,13 @@ export class Executor {
         const message = error instanceof Error ? error.message : String(error);
         context.outputs.push({ step, error: message });
         if (stepMeta) {
-          onProgress?.({ type: "step:error", step: stepMeta, error: message });
+          onProgress?.({ type: 'step:error', step: stepMeta, error: message });
         }
         throw error;
       }
     }
 
-    onProgress?.({ type: "complete" });
+    onProgress?.({ type: 'complete' });
 
     return context;
   }
@@ -192,7 +187,7 @@ export class Executor {
     //   });
     // }
 
-    if (!unique.length) unique.push("chat");
+    if (!unique.length) unique.push('chat');
     return unique;
   }
 }

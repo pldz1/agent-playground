@@ -1,5 +1,5 @@
-import { logger } from "../logger";
-import type { RuntimeAuthConfig } from "../config";
+import { logger } from '../logger';
+import type { RuntimeAuthConfig } from '../config';
 
 type AgentCompletionArgs = {
   model: string;
@@ -15,21 +15,20 @@ type PostArgs = {
   headers?: Record<string, string>;
 };
 
-const now = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 function normalizeBaseUrl(baseUrl: string): string {
-  return baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 }
 
 function ensureAuth(auth: RuntimeAuthConfig) {
   if (!auth.apiKey || !auth.baseUrl) {
     const missing = [];
-    if (!auth.apiKey) missing.push("API key");
-    if (!auth.baseUrl) missing.push("base URL");
+    if (!auth.apiKey) missing.push('API key');
+    if (!auth.baseUrl) missing.push('base URL');
     throw new Error(
-      `Missing ${missing.join(" and ")} for model "${auth.modelName}". ` +
-        `Please configure it in Settings > Models.`
+      `Missing ${missing.join(' and ')} for model "${auth.modelName}". ` +
+        `Please configure it in Settings > Models.`,
     );
   }
 }
@@ -50,10 +49,10 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
     });
 
     const res = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${auth.apiKey}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         ...headers,
       },
       body: JSON.stringify(body),
@@ -65,7 +64,7 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
     const elapsed = Math.round(now() - started);
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      const text = await res.text().catch(() => '');
       logger.error(`${auth.role} ← ${res.status}`, {
         path,
         status: res.status,
@@ -86,12 +85,11 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
   return {
     agent: {
       completions: {
-        create: (args: AgentCompletionArgs) =>
-          postJson({ path: "chat/completions", body: args }),
+        create: (args: AgentCompletionArgs) => postJson({ path: 'chat/completions', body: args }),
       },
     },
     responses: {
-      create: (args: any) => postJson({ path: "responses", body: args }),
+      create: (args: any) => postJson({ path: 'responses', body: args }),
     },
   };
 }

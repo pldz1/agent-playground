@@ -75,9 +75,7 @@ export function ChatSidebar({
       <div className="p-5 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Recent chats
-            </h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Recent chats</h2>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -113,9 +111,7 @@ export function ChatSidebar({
       <ScrollArea className="flex-1 min-h-0 p-5">
         {sidebarState === 'empty' && (
           <Card className="p-5 text-center space-y-3">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-              No chat yet.
-            </h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">No chat yet.</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Click the "New chat" button to create the first.
             </p>
@@ -124,9 +120,7 @@ export function ChatSidebar({
 
         {sidebarState === 'no-results' && (
           <Card className="p-5 text-center space-y-2">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-              No chat found
-            </h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-white">No chat found</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Try adjusting your search keywords.
             </p>

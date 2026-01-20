@@ -1,50 +1,44 @@
-import { useState, useEffect, useMemo } from "react";
-import { Sidebar } from "./components/sidebar";
-import { ChatsPage } from "./pages/chats-page";
-import { SettingsPage } from "./pages/settings-page";
-import { Toaster } from "./components/ui/sonner";
+import { useState, useEffect, useMemo } from 'react';
+import { Sidebar } from './components/sidebar';
+import { ChatsPage } from './pages/chats-page';
+import { SettingsPage } from './pages/settings-page';
+import { Toaster } from './components/ui/sonner';
 
-import type { AppSettings } from "@/types";
-import { useAppStore } from "@/store";
+import type { AppSettings } from '@/types';
+import { useAppStore } from '@/store';
 
-type Page = "chat" | "settings";
+type Page = 'chat' | 'settings';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("chat");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [currentPage, setCurrentPage] = useState<Page>('chat');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // ✅ 从 store 读
   const settings = useAppStore((s) => s.settings);
   const computeConfigStatus = useAppStore((s) => s.computeConfigStatus);
   const saveSettings = useAppStore((s) => s.saveSettings);
-  const modelStatus = useMemo(
-    () => computeConfigStatus(),
-    [computeConfigStatus, settings]
-  );
+  const modelStatus = useMemo(() => computeConfigStatus(), [computeConfigStatus, settings]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const initialTheme =
-      savedTheme ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
+      savedTheme ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
     setTheme(initialTheme);
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
   }, []);
 
-  const handleThemeChange = (newTheme: "light" | "dark") => {
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
   const handleNavigate = (path: string) => {
-    setCurrentPage(path === "/settings" ? "settings" : "chat");
+    setCurrentPage(path === '/settings' ? 'settings' : 'chat');
   };
 
-  const getCurrentPath = () => (currentPage === "settings" ? "/settings" : "/");
+  const getCurrentPath = () => (currentPage === 'settings' ? '/settings' : '/');
 
   const handleSettingsChange = (newSettings: AppSettings) => {
     void saveSettings(newSettings);
@@ -52,16 +46,16 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case "chat":
+      case 'chat':
         return (
           <ChatsPage
             debugMode={settings.debugMode}
             isModelConfigured={modelStatus.configured}
             configIssues={modelStatus.issues}
-            onNavigateToModels={() => handleNavigate("/settings")}
+            onNavigateToModels={() => handleNavigate('/settings')}
           />
         );
-      case "settings":
+      case 'settings':
         return (
           <SettingsPage
             onSettingsChange={handleSettingsChange}

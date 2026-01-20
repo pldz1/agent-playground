@@ -8,7 +8,8 @@ export function EmptyMessagesPlaceholder() {
           Ready to start a new chat.
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Enter your question or drag and drop an image into the input box. The agent will display the reasoning process and answer here.
+          Enter your question or drag and drop an image into the input box. The agent will display
+          the reasoning process and answer here.
         </p>
       </Card>
     </div>

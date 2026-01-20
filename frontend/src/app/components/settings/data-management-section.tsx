@@ -1,7 +1,7 @@
-import { Card } from "../../components/ui/card";
-import { Label } from "../../components/ui/label";
-import { Separator } from "../../components/ui/separator";
-import { Button } from "../../components/ui/button";
+import { Card } from '../../components/ui/card';
+import { Label } from '../../components/ui/label';
+import { Separator } from '../../components/ui/separator';
+import { Button } from '../../components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,8 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../components/ui/alert-dialog";
-import { Copy, Trash2 } from "lucide-react";
+} from '../../components/ui/alert-dialog';
+import { Copy, Trash2 } from 'lucide-react';
 
 interface DataManagementSectionProps {
   onCopyConfig: () => void;
@@ -28,9 +28,7 @@ export function DataManagementSection({
     <Card className="p-6">
       <div className="space-y-4">
         <div className="space-y-1">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Data Management
-          </h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Data Management</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Handle export and bulk deletion of stored sessions.
           </p>
@@ -53,17 +51,11 @@ export function DataManagementSection({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label>Clear All Data</Label>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Delete all chat history.
-            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Delete all chat history.</p>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 dark:text-red-400"
-              >
+              <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400">
                 <Trash2 className="mr-2 h-4 w-4" /> Clear All
               </Button>
             </AlertDialogTrigger>
@@ -71,16 +63,12 @@ export function DataManagementSection({
               <AlertDialogHeader>
                 <AlertDialogTitle>Clear all data?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This removes every session stored on this device. The action
-                  cannot be undone.
+                  This removes every session stored on this device. The action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={onClearAllData}
-                  className="bg-red-600 hover:bg-red-700"
-                >
+                <AlertDialogAction onClick={onClearAllData} className="bg-red-600 hover:bg-red-700">
                   Clear All
                 </AlertDialogAction>
               </AlertDialogFooter>

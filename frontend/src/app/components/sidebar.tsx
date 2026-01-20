@@ -17,7 +17,7 @@ export function Sidebar({ currentPath, onNavigate, modelsUnconfigured = false }:
           const Icon = item.icon;
           const isActive = currentPath === item.path;
           const showModelsBadge = modelsUnconfigured && item.id === 'settings';
-          
+
           return (
             <Tooltip key={item.id}>
               <TooltipTrigger asChild>
@@ -28,7 +28,7 @@ export function Sidebar({ currentPath, onNavigate, modelsUnconfigured = false }:
                     'relative h-12 w-12 rounded-2xl transition-colors',
                     isActive
                       ? 'bg-[#4F46E5] text-white hover:bg-[#4338CA]'
-                      : 'text-slate-500 hover:text-[#4F46E5] hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800'
+                      : 'text-slate-500 hover:text-[#4F46E5] hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800',
                   )}
                   onClick={() => onNavigate(item.path)}
                 >

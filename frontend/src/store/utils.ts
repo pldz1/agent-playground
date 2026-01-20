@@ -1,7 +1,7 @@
-import { ModelConfig, ModelCapabilities, AppSettings } from "../types";
+import { ModelConfig, ModelCapabilities, AppSettings } from '../types';
 
-export const SESSIONS_KEY = "ai_agent_sessions";
-export const SETTINGS_KEY = "ai_agent_settings";
+export const SESSIONS_KEY = 'ai_agent_sessions';
+export const SETTINGS_KEY = 'ai_agent_settings';
 
 export const DEFAULT_CAPABILITIES: ModelCapabilities = {
   vision: false,
@@ -12,13 +12,13 @@ export const DEFAULT_CAPABILITIES: ModelCapabilities = {
 
 export const defaultSettings: AppSettings = {
   debugMode: false,
-  exportFormat: "json",
-  routingModel: "",
-  reasoningModel: "",
-  chatModel: "",
-  visionModel: "",
-  webSearchModel: "",
-  imageModel: "",
+  exportFormat: 'json',
+  routingModel: '',
+  reasoningModel: '',
+  chatModel: '',
+  visionModel: '',
+  webSearchModel: '',
+  imageModel: '',
   chatContextLength: 6,
   models: [],
 };
@@ -31,7 +31,7 @@ export const cloneModel = (model: ModelConfig): ModelConfig => ({
 export const ensureUniqueLabel = (
   preferredLabel: string,
   used: Set<string>,
-  fallbackIndex: number
+  fallbackIndex: number,
 ): string => {
   const base = preferredLabel.trim() || `model-${fallbackIndex + 1}`;
   let candidate = base;
@@ -53,37 +53,33 @@ export const normalizeCapabilities = (value: unknown): ModelCapabilities => ({
 export const normalizeModel = (
   model: unknown,
   used: Set<string>,
-  index: number
+  index: number,
 ): ModelConfig | null => {
   if (model == null) return null;
 
-  if (typeof model === "string") {
+  if (typeof model === 'string') {
     const name = model.trim();
     if (!name) return null;
     const label = ensureUniqueLabel(name, used, index);
     return {
       label,
       name,
-      provider: "",
-      baseUrl: "",
-      apiKey: "",
+      provider: '',
+      baseUrl: '',
+      apiKey: '',
       capabilities: { ...DEFAULT_CAPABILITIES },
     };
   }
 
-  if (typeof model === "object") {
+  if (typeof model === 'object') {
     const source = model as Partial<ModelConfig> & Record<string, unknown>;
-    const rawName = typeof source.name === "string" ? source.name.trim() : "";
-    const rawLabel =
-      typeof source.label === "string" ? source.label.trim() : "";
+    const rawName = typeof source.name === 'string' ? source.name.trim() : '';
+    const rawLabel = typeof source.label === 'string' ? source.label.trim() : '';
     const label = ensureUniqueLabel(rawLabel, used, index);
 
-    const provider =
-      typeof source.provider === "string" ? source.provider.trim() : "";
-    const baseUrl =
-      typeof source.baseUrl === "string" ? source.baseUrl.trim() : "";
-    const apiKey =
-      typeof source.apiKey === "string" ? source.apiKey.trim() : "";
+    const provider = typeof source.provider === 'string' ? source.provider.trim() : '';
+    const baseUrl = typeof source.baseUrl === 'string' ? source.baseUrl.trim() : '';
+    const apiKey = typeof source.apiKey === 'string' ? source.apiKey.trim() : '';
 
     return {
       label,
@@ -98,10 +94,7 @@ export const normalizeModel = (
   return null;
 };
 
-export const normalizeModels = (
-  input: unknown,
-  fallback: ModelConfig[]
-): ModelConfig[] => {
+export const normalizeModels = (input: unknown, fallback: ModelConfig[]): ModelConfig[] => {
   if (!Array.isArray(input)) return fallback.map(cloneModel);
 
   const usedIds = new Set<string>();
@@ -112,54 +105,42 @@ export const normalizeModels = (
   return normalized.length > 0 ? normalized : fallback.map(cloneModel);
 };
 
-export const normalizeSettings = (
-  raw: unknown,
-  base: AppSettings
-): AppSettings => {
-  const source = (
-    typeof raw === "object" && raw !== null ? raw : {}
-  ) as Partial<AppSettings> & { availableModels?: unknown };
+export const normalizeSettings = (raw: unknown, base: AppSettings): AppSettings => {
+  const source = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<AppSettings> & {
+    availableModels?: unknown;
+  };
 
-  const models = normalizeModels(
-    source.models ?? source.availableModels,
-    base.models
-  );
-  const fallbackModelLabel = models[0]?.label ?? "";
+  const models = normalizeModels(source.models ?? source.availableModels, base.models);
+  const fallbackModelLabel = models[0]?.label ?? '';
 
   const pickModel = (value: unknown, defaultValue: string): string => {
-    const candidate = typeof value === "string" ? value.trim() : "";
-    if (candidate && models.some((model) => model.label === candidate))
-      return candidate;
-    if (models.some((model) => model.label === defaultValue))
-      return defaultValue;
+    const candidate = typeof value === 'string' ? value.trim() : '';
+    if (candidate && models.some((model) => model.label === candidate)) return candidate;
+    if (models.some((model) => model.label === defaultValue)) return defaultValue;
     return fallbackModelLabel;
   };
 
   const parseContextLength = (value: unknown, fallback: number): number => {
     const parsed =
-      typeof value === "number"
+      typeof value === 'number'
         ? value
-        : typeof value === "string"
-        ? Number.parseInt(value, 10)
-        : Number.NaN;
+        : typeof value === 'string'
+          ? Number.parseInt(value, 10)
+          : Number.NaN;
     if (Number.isNaN(parsed) || parsed < 0) return fallback;
     return Math.min(parsed, 50);
   };
 
   return {
     debugMode: Boolean(source.debugMode ?? base.debugMode),
-    exportFormat:
-      source.exportFormat === "markdown" ? "markdown" : base.exportFormat,
+    exportFormat: source.exportFormat === 'markdown' ? 'markdown' : base.exportFormat,
     routingModel: pickModel(source.routingModel, base.routingModel),
     reasoningModel: pickModel(source.reasoningModel, base.reasoningModel),
     chatModel: pickModel(source.chatModel, base.chatModel),
     webSearchModel: pickModel(source.webSearchModel, base.webSearchModel),
     imageModel: pickModel(source.imageModel, base.imageModel),
     visionModel: pickModel(source.visionModel, base.visionModel),
-    chatContextLength: parseContextLength(
-      source.chatContextLength,
-      base.chatContextLength
-    ),
+    chatContextLength: parseContextLength(source.chatContextLength, base.chatContextLength),
     models,
   };
 };

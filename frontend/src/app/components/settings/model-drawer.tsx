@@ -1,15 +1,15 @@
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
+} from '../../components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
 import {
   Drawer,
   DrawerContent,
@@ -17,7 +17,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "../../components/ui/drawer";
+} from '../../components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,19 +28,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../components/ui/alert-dialog";
+} from '../../components/ui/alert-dialog';
 
 import {
   capabilityKeys,
   CAPABILITY_METADATA,
-  PROVIDER_OPTIONS, getProviderOption, ModelFormState, ProviderOptionId
-} from "./utils";
+  PROVIDER_OPTIONS,
+  getProviderOption,
+  ModelFormState,
+  ProviderOptionId,
+} from './utils';
 
-import { Check, Eye, EyeOff, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, Trash2, X } from 'lucide-react';
 
 interface ModelDrawerProps {
   open: boolean;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   modelForm: ModelFormState;
   setModelForm: Dispatch<SetStateAction<ModelFormState>>;
   onOpenChange: (open: boolean) => void;
@@ -67,7 +70,7 @@ export function ModelDrawer({
 
   const capabilityValues = useMemo(
     () => capabilityKeys.filter((key) => modelForm.capabilities[key]),
-    [modelForm.capabilities]
+    [modelForm.capabilities],
   );
 
   const handleProviderPresetChange = (value: ProviderOptionId) => {
@@ -83,7 +86,7 @@ export function ModelDrawer({
   const handleCapabilityToggle = (values: string[]) => {
     const next = capabilityKeys.reduce(
       (acc, key) => ({ ...acc, [key]: values.includes(key) }),
-      {} as ModelFormState["capabilities"]
+      {} as ModelFormState['capabilities'],
     );
     setModelForm((prev) => ({ ...prev, capabilities: next }));
   };
@@ -99,13 +102,11 @@ export function ModelDrawer({
         <DrawerHeader>
           <div className="flex items-center justify-between">
             <div>
-              <DrawerTitle>
-                {mode === "create" ? "Add Model" : "Edit Model"}
-              </DrawerTitle>
+              <DrawerTitle>{mode === 'create' ? 'Add Model' : 'Edit Model'}</DrawerTitle>
               <DrawerDescription>
-                {mode === "create"
-                  ? "Register a model once, then reuse it across routing roles."
-                  : "Update credentials and capabilities for this model."}
+                {mode === 'create'
+                  ? 'Register a model once, then reuse it across routing roles.'
+                  : 'Update credentials and capabilities for this model.'}
               </DrawerDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
@@ -121,7 +122,7 @@ export function ModelDrawer({
               <Input
                 id="model-label"
                 value={modelForm.label}
-                disabled={mode === "edit"}
+                disabled={mode === 'edit'}
                 onChange={(event) =>
                   setModelForm((prev) => ({
                     ...prev,
@@ -151,9 +152,7 @@ export function ModelDrawer({
             <Label htmlFor="provider-preset">Provider Preset</Label>
             <Select
               value={modelForm.providerPreset}
-              onValueChange={(value) =>
-                handleProviderPresetChange(value as ProviderOptionId)
-              }
+              onValueChange={(value) => handleProviderPresetChange(value as ProviderOptionId)}
             >
               <SelectTrigger id="provider-preset">
                 <SelectValue placeholder="Choose a provider" />
@@ -165,9 +164,7 @@ export function ModelDrawer({
                       <option.icon className="h-4 w-4" />
                       <div className="flex flex-col">
                         <span>{option.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {option.description}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -189,7 +186,7 @@ export function ModelDrawer({
               }
               placeholder="OpenAI"
             />
-            {modelForm.providerPreset === "custom" ? (
+            {modelForm.providerPreset === 'custom' ? (
               <Input
                 className="mt-2"
                 value={modelForm.provider}
@@ -204,8 +201,7 @@ export function ModelDrawer({
             ) : (
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Provider stored as “
-                {modelForm.provider ||
-                  getProviderOption(modelForm.providerPreset)?.label}
+                {modelForm.provider || getProviderOption(modelForm.providerPreset)?.label}
                 ”.
               </p>
             )}
@@ -231,7 +227,7 @@ export function ModelDrawer({
               <div className="flex gap-2">
                 <Input
                   id="model-api-key"
-                  type={apiKeyVisible ? "text" : "password"}
+                  type={apiKeyVisible ? 'text' : 'password'}
                   value={modelForm.apiKey}
                   onChange={(event) =>
                     setModelForm((prev) => ({
@@ -247,13 +243,9 @@ export function ModelDrawer({
                   size="icon"
                   className="shrink-0"
                   onClick={() => setApiKeyVisible((value) => !value)}
-                  aria-label={apiKeyVisible ? "Hide API key" : "Show API key"}
+                  aria-label={apiKeyVisible ? 'Hide API key' : 'Show API key'}
                 >
-                  {apiKeyVisible ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {apiKeyVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -276,9 +268,7 @@ export function ModelDrawer({
                 >
                   <Icon className="h-4 w-4" />
                   <span className="text-xs font-medium">{label}</span>
-                  {modelForm.capabilities[key] ? (
-                    <Check className="ml-auto h-4 w-4" />
-                  ) : null}
+                  {modelForm.capabilities[key] ? <Check className="ml-auto h-4 w-4" /> : null}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
@@ -287,24 +277,18 @@ export function ModelDrawer({
 
         <DrawerFooter>
           <div className="flex items-center justify-between gap-3">
-            {mode === "edit" ? (
+            {mode === 'edit' ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-red-600 hover:text-red-700"
-                  >
+                  <Button variant="ghost" className="text-red-600 hover:text-red-700">
                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Delete {modelForm.name || modelForm.label}?
-                    </AlertDialogTitle>
+                    <AlertDialogTitle>Delete {modelForm.name || modelForm.label}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Removing this model will break routing selections that
-                      reference it.
+                      Removing this model will break routing selections that reference it.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -327,7 +311,7 @@ export function ModelDrawer({
                 Cancel
               </Button>
               <Button onClick={onSaveModel}>
-                {mode === "create" ? "Add Model" : "Save Changes"}
+                {mode === 'create' ? 'Add Model' : 'Save Changes'}
               </Button>
             </div>
           </div>

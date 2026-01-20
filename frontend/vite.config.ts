@@ -1,14 +1,14 @@
-import { defineConfig } from "vite";
-import path from "path";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import path from 'path';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 
@@ -18,8 +18,8 @@ export default defineConfig({
 
     // 如果你在 Docker / 远程机器 / 局域网访问，这是关键
     hmr: {
-      host: "localhost", // 或你的真实域名 / IP
-      protocol: "ws",
+      host: 'localhost', // 或你的真实域名 / IP
+      protocol: 'ws',
     },
 
     // 可选：固定端口，避免每次变化

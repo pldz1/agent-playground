@@ -1,20 +1,8 @@
 import { useEffect, useMemo, useState, useCallback, FormEvent, useRef } from 'react';
 import { agent } from '@/core';
-import {
-  getSessions,
-  saveSession,
-  deleteSession,
-  renameSession,
-  useAppStore,
-} from '@/store';
+import { getSessions, saveSession, deleteSession, renameSession, useAppStore } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
-import type {
-  AgentProgressEvent,
-  Message,
-  ModelConfigIssue,
-  Session,
-  ToolName,
-} from '@/types';
+import type { AgentProgressEvent, Message, ModelConfigIssue, Session, ToolName } from '@/types';
 import { MessageCard } from '../components/message-card';
 import { Composer } from '../components/composer';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -53,8 +41,10 @@ interface ChatsPageProps {
   onNavigateToModels: () => void;
 }
 
-const DEFAULT_PLACEHOLDER = 'Enter your question to start... (Press Enter to send / Shift+Enter to newline)';
-const CONFIG_PLACEHOLDER = 'Please complete the model configuration before starting the conversation';
+const DEFAULT_PLACEHOLDER =
+  'Enter your question to start... (Press Enter to send / Shift+Enter to newline)';
+const CONFIG_PLACEHOLDER =
+  'Please complete the model configuration before starting the conversation';
 
 const makeId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -260,30 +250,30 @@ export function ChatsPage({
           return prev.map((entry) =>
             entry.id === event.step.id
               ? {
-                ...entry,
-                status: 'running',
-                detail: `${describeTool(event.step.tool)} ...`,
-              }
+                  ...entry,
+                  status: 'running',
+                  detail: `${describeTool(event.step.tool)} ...`,
+                }
               : entry,
           );
         case 'step:complete':
           return prev.map((entry) =>
             entry.id === event.step.id
               ? {
-                ...entry,
-                status: 'success',
-                detail: `${describeTool(event.step.tool)} completed.`,
-              }
+                  ...entry,
+                  status: 'success',
+                  detail: `${describeTool(event.step.tool)} completed.`,
+                }
               : entry,
           );
         case 'step:error':
           return prev.map((entry) =>
             entry.id === event.step.id
               ? {
-                ...entry,
-                status: 'fail',
-                detail: event.error,
-              }
+                  ...entry,
+                  status: 'fail',
+                  detail: event.error,
+                }
               : entry,
           );
         case 'complete':
@@ -334,10 +324,7 @@ export function ChatsPage({
 
       const sessionAfterUser: Session = {
         ...targetSession,
-        title:
-          targetSession.messages.length === 0
-            ? limitTitle(text)
-            : targetSession.title,
+        title: targetSession.messages.length === 0 ? limitTitle(text) : targetSession.title,
         messages: [...targetSession.messages, userMessage],
         updatedAt: now,
         status: 'running',
@@ -350,29 +337,29 @@ export function ChatsPage({
       const precedingMessages =
         historyLimit > 0
           ? sessionAfterUser.messages.slice(
-            Math.max(0, sessionAfterUser.messages.length - 1 - historyLimit),
-            Math.max(0, sessionAfterUser.messages.length - 1),
-          )
+              Math.max(0, sessionAfterUser.messages.length - 1 - historyLimit),
+              Math.max(0, sessionAfterUser.messages.length - 1),
+            )
           : [];
       const history =
         precedingMessages.length > 0
           ? precedingMessages
-            .filter((message) => message.role === 'user' || message.role === 'assistant')
-            .map((message) => {
-              const trimmed = message.content.trim();
-              const content =
-                trimmed ||
-                (message.images?.length
-                  ? `[Image message x${message.images.length}]`
-                  : '');
-              return content
-                ? {
-                  role: message.role,
-                  content,
-                }
-                : null;
-            })
-            .filter((entry): entry is { role: 'user' | 'assistant'; content: string } => Boolean(entry))
+              .filter((message) => message.role === 'user' || message.role === 'assistant')
+              .map((message) => {
+                const trimmed = message.content.trim();
+                const content =
+                  trimmed ||
+                  (message.images?.length ? `[Image message x${message.images.length}]` : '');
+                return content
+                  ? {
+                      role: message.role,
+                      content,
+                    }
+                  : null;
+              })
+              .filter((entry): entry is { role: 'user' | 'assistant'; content: string } =>
+                Boolean(entry),
+              )
           : [];
       const historyInput = history.length > 0 ? history : undefined;
 
@@ -403,8 +390,7 @@ export function ChatsPage({
 
         upsertSession(sessionAfterAgent);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Agent call failed';
+        const message = error instanceof Error ? error.message : 'Agent call failed';
         const sessionWithError: Session = {
           ...sessionAfterUser,
           updatedAt: Date.now(),
@@ -431,13 +417,11 @@ export function ChatsPage({
   const handleDeleteCurrentSession = useCallback(() => {
     if (!sessionToDelete) return;
     void deleteSession(sessionToDelete.id);
-    setSessions((prev) =>
-      prev.filter((session) => session.id !== sessionToDelete.id),
-    );
+    setSessions((prev) => prev.filter((session) => session.id !== sessionToDelete.id));
     setSessionToDelete(null);
     setCurrentSessionId((prev) =>
       prev === sessionToDelete.id
-        ? sessions.find((session) => session.id !== sessionToDelete.id)?.id ?? null
+        ? (sessions.find((session) => session.id !== sessionToDelete.id)?.id ?? null)
         : prev,
     );
     toast.success('Chat deleted');
@@ -553,11 +537,7 @@ export function ChatsPage({
                   )}
                   {currentSession.messages.length ? (
                     currentSession.messages.map((message) => (
-                      <MessageCard
-                        key={message.id}
-                        message={message}
-                        debugMode={debugMode}
-                      />
+                      <MessageCard key={message.id} message={message} debugMode={debugMode} />
                     ))
                   ) : (
                     <EmptyMessagesPlaceholder />
@@ -587,10 +567,7 @@ export function ChatsPage({
                 />
               </div>
             )}
-            <ChatWelcomePanel
-              onCreateSession={handleCreateSession}
-              disabled={newSessionDisabled}
-            />
+            <ChatWelcomePanel onCreateSession={handleCreateSession} disabled={newSessionDisabled} />
           </div>
         )}
       </div>
@@ -603,7 +580,8 @@ export function ChatsPage({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Current Chat</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will permanently delete the current chat and all messages, and cannot be undone.
+              This action will permanently delete the current chat and all messages, and cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

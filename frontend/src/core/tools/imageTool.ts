@@ -1,30 +1,29 @@
-import { resolveAuth } from "../config";
-import { logger } from "../logger";
-import { getOpenAIClient } from "./openaiClient";
+import { resolveAuth } from '../config';
+import { logger } from '../logger';
+import { getOpenAIClient } from './openaiClient';
 
 type ImageAuthHeaders = {
   url: string;
   headers: Record<string, string>;
 };
 
-const now = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 function buildImageEndpoint(
   authBaseUrl: string,
   apiVersion: string,
   apiKey: string,
-  modelName: string
+  modelName: string,
 ): ImageAuthHeaders {
-  const base = authBaseUrl.replace(/\/+$/, "");
+  const base = authBaseUrl.replace(/\/+$/, '');
   const isAzure = /azure\.com/i.test(base) || /openai\.azure/i.test(base);
 
   if (isAzure) {
     return {
       url: `${base}/openai/deployments/${modelName}/images/generations?api-version=${apiVersion}`,
       headers: {
-        "Api-Key": apiKey,
-        "Content-Type": "application/json",
+        'Api-Key': apiKey,
+        'Content-Type': 'application/json',
       },
     };
   }
@@ -33,7 +32,7 @@ function buildImageEndpoint(
     url: `${base}/v1/images/generations`,
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   };
 }
@@ -41,23 +40,23 @@ function buildImageEndpoint(
 export class ImageTool {
   async generate({
     prompt,
-    size = "1024x1024",
+    size = '1024x1024',
     model,
   }: {
     prompt: string;
     size?: string;
     model?: string;
   }) {
-    const auth = resolveAuth("image");
-    auth.apiVersion = auth.apiVersion || "2025-04-01-preview";
+    const auth = resolveAuth('image');
+    auth.apiVersion = auth.apiVersion || '2025-04-01-preview';
     const modelName = model ?? auth.modelName;
 
     if (!auth.apiKey || !auth.baseUrl) {
-      logger.error("ImageTool.generate:missing-config", {
+      logger.error('ImageTool.generate:missing-config', {
         modelName,
       });
       throw new Error(
-        "Image generation is not configured. Please set Base URL and API Key for the image model."
+        'Image generation is not configured. Please set Base URL and API Key for the image model.',
       );
     }
 
@@ -65,29 +64,29 @@ export class ImageTool {
       auth.baseUrl,
       auth.apiVersion,
       auth.apiKey,
-      modelName
+      modelName,
     );
     const body = {
       prompt,
       n: 1,
       size,
-      quality: "medium",
-      output_format: "png",
+      quality: 'medium',
+      output_format: 'png',
     };
 
     const started = now();
-    logger.debug("ImageTool.generate:start", {
+    logger.debug('ImageTool.generate:start', {
       modelName,
       provider: auth.model.provider,
       url,
     });
 
     const res = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers,
       body: JSON.stringify(body),
     }).catch((error) => {
-      logger.error("ImageTool.generate:request-error", {
+      logger.error('ImageTool.generate:request-error', {
         modelName,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -97,8 +96,8 @@ export class ImageTool {
     const duration = Math.round(now() - started);
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      logger.error("ImageTool.generate:failed", {
+      const text = await res.text().catch(() => '');
+      logger.error('ImageTool.generate:failed', {
         modelName,
         status: res.status,
         body: text,
@@ -107,7 +106,7 @@ export class ImageTool {
       throw new Error(`Image generation failed: ${res.status} ${text}`);
     }
 
-    logger.debug("ImageTool.generate:success", {
+    logger.debug('ImageTool.generate:success', {
       modelName,
       durationMs: duration,
     });
@@ -129,10 +128,10 @@ export class ImageTool {
     model?: string;
   }) {
     if (!image) {
-      throw new Error("ImageTool.understand requires `image`.");
+      throw new Error('ImageTool.understand requires `image`.');
     }
 
-    const auth = resolveAuth("image");
+    const auth = resolveAuth('image');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
     const started = now();
@@ -140,14 +139,14 @@ export class ImageTool {
     const imageUrl = image.url
       ? image.url
       : image.data
-      ? `data:${image.mimeType || "image/png"};base64,${image.data}`
-      : null;
+        ? `data:${image.mimeType || 'image/png'};base64,${image.data}`
+        : null;
 
     if (!imageUrl) {
-      throw new Error("ImageTool.understand requires image.url or image.data");
+      throw new Error('ImageTool.understand requires image.url or image.data');
     }
 
-    logger.debug("ImageTool.understand:start", {
+    logger.debug('ImageTool.understand:start', {
       modelName,
       provider: auth.model.provider,
     });
@@ -157,27 +156,27 @@ export class ImageTool {
         model: modelName,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: imageUrl } },
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: imageUrl } },
             ],
           },
         ],
       });
 
       const duration = Math.round(now() - started);
-      logger.debug("ImageTool.understand:success", {
+      logger.debug('ImageTool.understand:success', {
         modelName,
         durationMs: duration,
       });
 
       return {
-        text: completion.choices?.[0]?.message?.content ?? "",
+        text: completion.choices?.[0]?.message?.content ?? '',
         choice: completion.choices?.[0],
       };
     } catch (error) {
-      logger.error("ImageTool.understand:error", {
+      logger.error('ImageTool.understand:error', {
         modelName,
         error: error instanceof Error ? error.message : String(error),
       });

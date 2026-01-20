@@ -16,7 +16,7 @@ export interface ModelConfig {
 
 export interface AppSettings {
   debugMode: boolean;
-  exportFormat: "json" | "markdown";
+  exportFormat: 'json' | 'markdown';
   routingModel: string;
   chatModel: string;
   webSearchModel: string;
@@ -27,13 +27,7 @@ export interface AppSettings {
   models: ModelConfig[];
 }
 
-export type ModelRole =
-  | "routing"
-  | "chat"
-  | "vision"
-  | "reasoning"
-  | "image"
-  | "webSearch";
+export type ModelRole = 'routing' | 'chat' | 'vision' | 'reasoning' | 'image' | 'webSearch';
 
 export interface ModelConfigIssue {
   role: ModelRole;

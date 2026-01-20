@@ -1,17 +1,14 @@
-import type { AppSettings } from "@/types";
-import { Card } from "../../components/ui/card";
-import { Switch } from "../../components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
-import { Bug, Moon, Sun } from "lucide-react";
+import type { AppSettings } from '@/types';
+import { Card } from '../../components/ui/card';
+import { Switch } from '../../components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
+import { Bug, Moon, Sun } from 'lucide-react';
 
 interface GeneralSettingsSectionProps {
   settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(
-    key: K,
-    value: AppSettings[K]
-  ) => void;
-  theme: "light" | "dark";
-  onThemeChange: (theme: "light" | "dark") => void;
+  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
+  theme: 'light' | 'dark';
+  onThemeChange: (theme: 'light' | 'dark') => void;
 }
 
 export function GeneralSettingsSection({
@@ -24,9 +21,7 @@ export function GeneralSettingsSection({
     <Card className="p-6">
       <div className="flex flex-col gap-6">
         <div>
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            General Settings
-          </h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">General Settings</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Manage debugging mode and interface themes.
           </p>
@@ -37,18 +32,16 @@ export function GeneralSettingsSection({
             <div className="flex items-start gap-3">
               <Bug className="mt-0.5 size-5 text-[#4F46E5]" />
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  Debugging mode
-                </p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">Debugging mode</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Displays detailed reasoning and tool calls of the agent,
-                  helping with troubleshooting.
+                  Displays detailed reasoning and tool calls of the agent, helping with
+                  troubleshooting.
                 </p>
               </div>
             </div>
             <Switch
               checked={settings.debugMode}
-              onCheckedChange={(value) => onSettingChange("debugMode", value)}
+              onCheckedChange={(value) => onSettingChange('debugMode', value)}
             />
           </div>
 
@@ -56,9 +49,7 @@ export function GeneralSettingsSection({
             <div className="flex items-start gap-3">
               <Sun className="mt-0.5 size-5 text-[#FB923C]" />
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  Interface Theme
-                </p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">Interface Theme</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Switch between light and dark modes.
                 </p>
@@ -67,9 +58,7 @@ export function GeneralSettingsSection({
             <ToggleGroup
               type="single"
               value={theme}
-              onValueChange={(value) =>
-                value && onThemeChange(value as "light" | "dark")
-              }
+              onValueChange={(value) => value && onThemeChange(value as 'light' | 'dark')}
               className="mt-1 md:mt-0"
             >
               <ToggleGroupItem

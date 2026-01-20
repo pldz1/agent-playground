@@ -1,13 +1,8 @@
-import { create } from "zustand";
-import { Session, AppSettings, ModelConfigStatus } from "@/types";
-import {
-  normalizeSettings,
-  defaultSettings,
-  SESSIONS_KEY,
-  SETTINGS_KEY,
-} from "./utils";
-import { modelConfig } from "./config";
-import { getItem, setItem, removeItem } from "./indexed-db";
+import { create } from 'zustand';
+import { Session, AppSettings, ModelConfigStatus } from '@/types';
+import { normalizeSettings, defaultSettings, SESSIONS_KEY, SETTINGS_KEY } from './utils';
+import { modelConfig } from './config';
+import { getItem, setItem, removeItem } from './indexed-db';
 
 interface StoreState {
   sessions: Session[];
@@ -15,10 +10,7 @@ interface StoreState {
   loadSessions: () => Promise<void>;
   saveSession: (session: Session) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
-  renameSession: (
-    sessionId: string,
-    newTitle: string
-  ) => Promise<Session | null>;
+  renameSession: (sessionId: string, newTitle: string) => Promise<Session | null>;
   clearAllSessions: () => Promise<void>;
   loadSettings: () => Promise<void>;
   saveSettings: (settings: AppSettings) => Promise<void>;
@@ -112,10 +104,7 @@ export const useAppStore = create<StoreState>((set, get) => ({
 }));
 
 export async function initializeStore() {
-  await Promise.all([
-    useAppStore.getState().loadSettings(),
-    useAppStore.getState().loadSessions(),
-  ]);
+  await Promise.all([useAppStore.getState().loadSettings(), useAppStore.getState().loadSessions()]);
 }
 
 export const getSessions = (): Session[] => {
@@ -130,10 +119,7 @@ export const deleteSession = (sessionId: string): Promise<void> => {
   return useAppStore.getState().deleteSession(sessionId);
 };
 
-export const renameSession = (
-  sessionId: string,
-  newTitle: string
-): Promise<Session | null> => {
+export const renameSession = (sessionId: string, newTitle: string): Promise<Session | null> => {
   return useAppStore.getState().renameSession(sessionId, newTitle);
 };
 

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Toaster as Sonner, ToasterProps } from "sonner";
-import { useEffect, useState } from "react";
+import { Toaster as Sonner, ToasterProps } from 'sonner';
+import { useEffect, useState } from 'react';
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -35,9 +35,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          '--normal-bg': 'var(--popover)',
+          '--normal-text': 'var(--popover-foreground)',
+          '--normal-border': 'var(--border)',
         } as React.CSSProperties
       }
       {...props}

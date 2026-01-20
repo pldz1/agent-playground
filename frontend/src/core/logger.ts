@@ -1,8 +1,8 @@
-import { getSettings } from "@/store";
+import { getSettings } from '@/store';
 
-type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-const PREFIX = "[Agent Playground]";
+const PREFIX = '[Agent Playground]';
 
 function shouldLogDebug(): boolean {
   try {
@@ -12,29 +12,25 @@ function shouldLogDebug(): boolean {
   }
 }
 
-function log(
-  level: LogLevel,
-  message: string,
-  payload?: Record<string, unknown>
-) {
+function log(level: LogLevel, message: string, payload?: Record<string, unknown>) {
   const args: unknown[] = [`${PREFIX} ${message}`];
   if (payload && Object.keys(payload).length) {
     args.push(payload);
   }
 
   switch (level) {
-    case "debug":
+    case 'debug':
       if (shouldLogDebug()) {
         console.debug(...args);
       }
       break;
-    case "info":
+    case 'info':
       console.info(...args);
       break;
-    case "warn":
+    case 'warn':
       console.warn(...args);
       break;
-    case "error":
+    case 'error':
       console.error(...args);
       break;
   }
@@ -42,15 +38,15 @@ function log(
 
 export const logger = {
   debug(message: string, payload?: Record<string, unknown>) {
-    log("debug", message, payload);
+    log('debug', message, payload);
   },
   info(message: string, payload?: Record<string, unknown>) {
-    log("info", message, payload);
+    log('info', message, payload);
   },
   warn(message: string, payload?: Record<string, unknown>) {
-    log("warn", message, payload);
+    log('warn', message, payload);
   },
   error(message: string, payload?: Record<string, unknown>) {
-    log("error", message, payload);
+    log('error', message, payload);
   },
 };

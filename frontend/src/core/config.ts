@@ -1,5 +1,5 @@
-import type { AppSettings, ModelConfig, ModelRole } from "@/types";
-import { getSettings, defaultSettings } from "@/store";
+import type { AppSettings, ModelConfig, ModelRole } from '@/types';
+import { getSettings, defaultSettings } from '@/store';
 
 export interface RuntimeModel {
   label: string;
@@ -19,11 +19,11 @@ export interface RuntimeAuthConfig {
 }
 
 const EMPTY_MODEL: ModelConfig = {
-  label: "",
-  name: "",
-  provider: "",
-  baseUrl: "",
-  apiKey: "",
+  label: '',
+  name: '',
+  provider: '',
+  baseUrl: '',
+  apiKey: '',
   capabilities: {
     vision: false,
     webSearch: false,
@@ -42,36 +42,31 @@ function safeGetSettings(): AppSettings {
 
 function selectModelName(settings: AppSettings, role: ModelRole): string {
   switch (role) {
-    case "chat":
+    case 'chat':
       return settings.chatModel;
-    case "vision":
+    case 'vision':
       return settings.visionModel;
-    case "webSearch":
+    case 'webSearch':
       return settings.webSearchModel;
-    case "reasoning":
+    case 'reasoning':
       return settings.reasoningModel;
-    case "routing":
+    case 'routing':
       return settings.routingModel;
-    case "image":
+    case 'image':
       return settings.imageModel;
     default:
       return settings.chatModel;
   }
 }
 
-function findModel(
-  settings: AppSettings,
-  label: string
-): ModelConfig | undefined {
+function findModel(settings: AppSettings, label: string): ModelConfig | undefined {
   if (!label) return undefined;
   return settings.models.find((model) => model.label === label);
 }
 
 function fallbackModel(role: ModelRole): ModelConfig | null {
   const fallbackId = selectModelName(defaultSettings, role);
-  return (
-    findModel(defaultSettings, fallbackId) ?? defaultSettings.models[0] ?? null
-  );
+  return findModel(defaultSettings, fallbackId) ?? defaultSettings.models[0] ?? null;
 }
 
 function toRuntimeModel(model: ModelConfig): RuntimeModel {
@@ -102,8 +97,8 @@ export function resolveModel(role: ModelRole): {
 
 export function resolveAuth(role: ModelRole): RuntimeAuthConfig {
   const { modelName, model } = resolveModel(role);
-  const baseUrl = normalizeBaseUrl(model.baseUrl || "");
-  const apiKey = model.apiKey || "";
+  const baseUrl = normalizeBaseUrl(model.baseUrl || '');
+  const apiKey = model.apiKey || '';
 
   return {
     role,
@@ -111,32 +106,28 @@ export function resolveAuth(role: ModelRole): RuntimeAuthConfig {
     model,
     apiKey,
     baseUrl,
-    apiVersion: "",
+    apiVersion: '',
   };
 }
 
 export function assertAuth(role: ModelRole): void {
   const auth = resolveAuth(role);
   const missing: string[] = [];
-  if (!auth.apiKey) missing.push("API key");
-  if (!auth.baseUrl) missing.push("base URL");
+  if (!auth.apiKey) missing.push('API key');
+  if (!auth.baseUrl) missing.push('base URL');
 
   if (missing.length) {
-    const providerInfo = auth.model.provider
-      ? ` for provider "${auth.model.provider}"`
-      : "";
+    const providerInfo = auth.model.provider ? ` for provider "${auth.model.provider}"` : '';
     throw new Error(
-      `Missing ${missing.join(
-        " and "
-      )}${providerInfo} in settings for role "${role}". ` +
-        `Please configure it in Settings > Models.`
+      `Missing ${missing.join(' and ')}${providerInfo} in settings for role "${role}". ` +
+        `Please configure it in Settings > Models.`,
     );
   }
 }
 
 function normalizeBaseUrl(value: string): string {
   if (!value) return value;
-  return value.replace(/\/+$/, "");
+  return value.replace(/\/+$/, '');
 }
 
 export const config = {
