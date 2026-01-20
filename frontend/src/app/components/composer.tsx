@@ -73,6 +73,31 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
     e.preventDefault();
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const { items } = e.clipboardData;
+    if (!items) {
+      return;
+    }
+
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (!file) {
+          continue;
+        }
+        const namedFile =
+          file.name && file.name.trim().length > 0
+            ? file
+            : new File([file], `clipboard-image-${Date.now()}.png`, {
+              type: file.type,
+            });
+        handleImageSelect(namedFile);
+        break;
+      }
+    }
+  };
+
   const removeImage = () => {
     setImage(null);
     setImagePreview(null);
@@ -129,6 +154,7 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={
             placeholder ??
             'Enter your question... (Press Enter to send / Shift+Enter for a new line)'
