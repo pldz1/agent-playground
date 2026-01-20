@@ -18,7 +18,7 @@ function safeJsonParse(text: string) {
 function normalizeRoute(route: any): IntentName[] {
   const allowed = new Set<IntentName>([
     "chat",
-    "web_search",
+    "webSearch",
     "reasoning",
     "image_generate",
     "image_understand",
@@ -83,7 +83,6 @@ export async function route({
     const text = completion.choices?.[0]?.message?.content ?? "{}";
     const parsed = safeJsonParse(text) || {};
     const intents = normalizeRoute(parsed);
-    console.log(parsed);
 
     return {
       intents,

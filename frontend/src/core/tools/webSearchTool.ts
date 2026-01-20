@@ -32,7 +32,7 @@ export class WebSearchTool {
 
       return {
         query: input,
-        output_text: response.output_text,
+        output_text: response.output[1].content[0].text,
         response,
         fetchedAt: new Date().toISOString(),
       };

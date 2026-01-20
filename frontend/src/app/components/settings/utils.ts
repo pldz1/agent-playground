@@ -142,7 +142,7 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
     value: "azure-openai",
     label: "Azure OpenAI",
     description: "Azure-hosted OpenAI deployment.",
-    defaultBaseUrl: "https://YOUR-RESOURCE.openai.azure.com",
+    defaultBaseUrl: "https://YOUR_RESOURCE.openai.azure.com",
     icon: Network,
   },
   {

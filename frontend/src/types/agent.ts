@@ -1,5 +1,5 @@
 export type ToolName =
-  | "web_search"
+  | "webSearch"
   | "reasoning"
   | "chat"
   | "image_generate"

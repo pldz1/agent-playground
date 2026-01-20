@@ -14,7 +14,7 @@ import { Executor } from "./executor";
 const PLAN_DESCRIPTIONS: Record<IntentName, string> = {
   chat: "Chat message response",
   reasoning: "Deep reasoning analysis",
-  web_search: "Perform web search",
+  webSearch: "Perform web search",
   image_generate: "Generate image",
   image_understand: "Understand image content",
 };
@@ -51,7 +51,7 @@ function toToolOutput({
   }
 
   switch (output.step) {
-    case "web_search":
+    case "webSearch":
       return {
         ...base,
         status: "success",
@@ -147,7 +147,7 @@ function pickFinalAnswer(outputs: ToolRunOutput[]): string {
       return current.answer.text;
     }
 
-    if (current.step === "web_search" && current.web?.output_text) {
+    if (current.step === "webSearch" && current.web?.output_text) {
       return current.web.output_text;
     }
 

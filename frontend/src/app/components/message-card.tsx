@@ -2,6 +2,8 @@ import type { Message } from "@/types";
 import { Card } from "./ui/card";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { StepCard } from "./step-card";
+import { MdPreview } from "md-editor-rt";
+import "md-editor-rt/lib/style.css";
 
 interface MessageCardProps {
   message: Message;
@@ -10,6 +12,10 @@ interface MessageCardProps {
 
 export function MessageCard({ message, debugMode }: MessageCardProps) {
   const isUser = message.role === "user";
+  const isDarkMode =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+  const mdTheme = isDarkMode ? "dark" : "light";
 
   return (
     <div className={`flex gap-4 ${isUser ? "justify-end" : "justify-start"}`}>
@@ -22,7 +28,7 @@ export function MessageCard({ message, debugMode }: MessageCardProps) {
       )}
 
       <div
-        className={`flex flex-col gap-2 max-w-[70%] ${
+        className={`flex flex-col gap-2 max-w-[90%] items-start overflow-x-auto w-full ${
           isUser ? "items-end" : "items-start"
         }`}
       >
@@ -33,14 +39,29 @@ export function MessageCard({ message, debugMode }: MessageCardProps) {
               : "bg-white dark:bg-gray-800 text-[#0F172A] dark:text-white"
           }`}
         >
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          {isUser ? (
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          ) : (
+            <MdPreview
+              id={`message-preview-${message.id}`}
+              className="md-message-preview"
+              theme={mdTheme}
+              codeTheme="github"
+              value={message.content}
+              showCodeRowNumber={false}
+              autoFoldThreshold={1000}
+              codeFoldable={true}
+              noImgZoomIn
+            />
+          )}
+
           {message.images && message.images.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {message.images.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
-                  alt={`User uploaded ${idx + 1}`}
+                  alt={`Upload ${idx + 1}`}
                   className="rounded-lg max-w-xs"
                 />
               ))}

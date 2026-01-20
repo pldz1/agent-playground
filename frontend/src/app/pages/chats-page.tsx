@@ -82,7 +82,7 @@ const fileToDataUrl = (file: File): Promise<string> =>
 
 const TOOL_LABELS: Record<ToolName, string> = {
   chat: '对话',
-  web_search: '搜索',
+  webSearch: '搜索',
   reasoning: '思考',
   image_generate: '图片生成',
   image_understand: '图片理解',

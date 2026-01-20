@@ -47,7 +47,7 @@ export function StepCard({ output }: StepCardProps) {
 
   const renderToolOutput = () => {
     switch (output.tool) {
-      case 'web_search':
+      case 'webSearch':
         return (
           <div className="space-y-2">
             {output.data?.query && (

@@ -93,8 +93,9 @@ export function ChatAgentSection({
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
                 >
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform ${routingOpen ? "" : "-rotate-90"
-                      }`}
+                    className={`h-4 w-4 transition-transform ${
+                      routingOpen ? "" : "-rotate-90"
+                    }`}
                   />
                 </button>
               </CollapsibleTrigger>
@@ -150,7 +151,7 @@ export function ChatAgentSection({
                                 key={`${key}-${model.label}`}
                                 value={model.label}
                               >
-                                {model.name}
+                                {model.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -174,12 +175,16 @@ export function ChatAgentSection({
                   Model Library
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Central place to manage provider credentials, capabilities, and
-                  availability.
+                  Central place to manage provider credentials, capabilities,
+                  and availability.
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={onOpenCreateDrawer} size="sm" variant="outline">
+                <Button
+                  onClick={onOpenCreateDrawer}
+                  size="sm"
+                  variant="outline"
+                >
                   <Plus className="mr-2 h-4 w-4" /> Add Model
                 </Button>
                 <CollapsibleTrigger asChild>
@@ -188,8 +193,9 @@ export function ChatAgentSection({
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-gray-600 transition hover:bg-slate-100 dark:border-gray-800 dark:text-gray-300"
                   >
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform ${libraryOpen ? "" : "-rotate-90"
-                        }`}
+                      className={`h-4 w-4 transition-transform ${
+                        libraryOpen ? "" : "-rotate-90"
+                      }`}
                     />
                   </button>
                 </CollapsibleTrigger>
@@ -228,11 +234,11 @@ export function ChatAgentSection({
                           <TableRow key={model.label}>
                             <TableCell>
                               <div className="flex flex-col">
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                  {model.name}
-                                </span>
                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                   {model.label}
+                                </span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  {model.name}
                                 </span>
                               </div>
                             </TableCell>
@@ -250,15 +256,14 @@ export function ChatAgentSection({
                               <div className="flex items-center gap-2">
                                 {CAPABILITY_METADATA.map(
                                   ({ key, icon: Icon, label }) => (
-                                    <Tooltip
-                                      key={`${model.label}-${key}`}
-                                    >
+                                    <Tooltip key={`${model.label}-${key}`}>
                                       <TooltipTrigger asChild>
                                         <span
-                                          className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${model.capabilities[key]
-                                            ? "border-indigo-500 bg-indigo-500/10 text-indigo-500"
-                                            : "border-gray-200 text-gray-400 dark:border-gray-700"
-                                            }`}
+                                          className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition ${
+                                            model.capabilities[key]
+                                              ? "border-indigo-500 bg-indigo-500/10 text-indigo-500"
+                                              : "border-gray-200 text-gray-400 dark:border-gray-700"
+                                          }`}
                                         >
                                           <Icon className="h-4 w-4" />
                                         </span>
@@ -275,9 +280,9 @@ export function ChatAgentSection({
                                   <span className="text-sm text-gray-700 dark:text-gray-300">
                                     {model.baseUrl
                                       ? model.baseUrl
-                                        .replace(/^https?:\/\//, "")
-                                        .slice(0, 28) +
-                                      (model.baseUrl.length > 28 ? "…" : "")
+                                          .replace(/^https?:\/\//, "")
+                                          .slice(0, 28) +
+                                        (model.baseUrl.length > 28 ? "…" : "")
                                       : "Not set"}
                                   </span>
                                 </TooltipTrigger>
@@ -312,7 +317,7 @@ export function ChatAgentSection({
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>
-                                        Remove {model.name}?
+                                        Remove {model.label}?
                                       </AlertDialogTitle>
                                       <AlertDialogDescription>
                                         This model will no longer be available
@@ -324,7 +329,9 @@ export function ChatAgentSection({
                                         Cancel
                                       </AlertDialogCancel>
                                       <AlertDialogAction
-                                        onClick={() => onDeleteModel(model.label)}
+                                        onClick={() =>
+                                          onDeleteModel(model.label)
+                                        }
                                         className="bg-red-600 hover:bg-red-700"
                                       >
                                         Remove

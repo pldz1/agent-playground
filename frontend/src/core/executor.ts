@@ -10,7 +10,7 @@ import type {
 
 export type IntentName =
   | "chat"
-  | "web_search"
+  | "webSearch"
   | "reasoning"
   | "image_generate"
   | "image_understand";
@@ -18,7 +18,7 @@ export type IntentName =
 export type ImageInput = { data?: string; url?: string; mimeType?: string };
 
 export type ToolRunOutput =
-  | { step: "web_search"; web: any }
+  | { step: "webSearch"; web: any }
   | { step: "reasoning"; answer: any }
   | { step: "chat"; answer: any }
   | { step: "image_generate"; result: any }
@@ -28,7 +28,7 @@ export type ToolRunOutput =
 export class Executor {
   tools: {
     chat: ChatTool;
-    web_search: WebSearchTool;
+    webSearch: WebSearchTool;
     reasoning: ReasoningTool;
     image: ImageTool;
   };
@@ -38,7 +38,7 @@ export class Executor {
       tools ||
       ({
         chat: new ChatTool(),
-        web_search: new WebSearchTool(),
+        webSearch: new WebSearchTool(),
         reasoning: new ReasoningTool(),
         image: new ImageTool(),
       } satisfies Executor["tools"]);
@@ -79,6 +79,7 @@ export class Executor {
       plan,
     };
 
+    console.error(plan);
     for (let index = 0; index < plan.length; index += 1) {
       const step = plan[index];
       const stepMeta = planSteps[index];
@@ -99,8 +100,8 @@ export class Executor {
           continue;
         }
 
-        if (step === "web_search") {
-          const web = await this.tools.web_search.search({ input });
+        if (step === "webSearch") {
+          const web = await this.tools.webSearch.search({ input });
           context.web = web;
           context.outputs.push({ step, web });
           if (stepMeta) {
@@ -152,8 +153,7 @@ export class Executor {
           });
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         context.outputs.push({ step, error: message });
         if (stepMeta) {
           onProgress?.({ type: "step:error", step: stepMeta, error: message });
@@ -173,21 +173,21 @@ export class Executor {
       if (!unique.includes(intent)) unique.push(intent);
     }
 
-    if (hasImage && !unique.includes("image_understand")) {
-      unique.unshift("image_understand");
-    }
+    // if (hasImage && !unique.includes("image_understand")) {
+    //   unique.unshift("image_understand");
+    // }
 
-    if (unique.includes("web_search")) {
-      if (!unique.includes("reasoning") && !unique.includes("chat")) {
-        unique.push("chat");
-      }
-      unique.sort((a, b) => {
-        const order: IntentName[] = ["web_search", "reasoning", "chat"];
-        const ai = order.includes(a) ? order.indexOf(a) : 99;
-        const bi = order.includes(b) ? order.indexOf(b) : 99;
-        return ai - bi;
-      });
-    }
+    // if (unique.includes("webSearch")) {
+    //   if (!unique.includes("reasoning") && !unique.includes("chat")) {
+    //     unique.push("chat");
+    //   }
+    //   unique.sort((a, b) => {
+    //     const order: IntentName[] = ["webSearch", "reasoning", "chat"];
+    //     const ai = order.includes(a) ? order.indexOf(a) : 99;
+    //     const bi = order.includes(b) ? order.indexOf(b) : 99;
+    //     return ai - bi;
+    //   });
+    // }
 
     if (!unique.length) unique.push("chat");
     return unique;
