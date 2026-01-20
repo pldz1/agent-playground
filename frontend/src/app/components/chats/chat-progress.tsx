@@ -35,7 +35,7 @@ export function ChatProgress({ entries }: ChatProgressProps) {
   return (
     <Card className="p-4">
       <h4 className="text-sm font-medium text-[#0F172A] dark:text-white">
-        当前对话进度
+        Current Agent Task Progress
       </h4>
       <div className="mt-3 space-y-3">
         {entries.map((entry) => (

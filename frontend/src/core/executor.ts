@@ -5,6 +5,7 @@ import { ImageTool } from "./tools/imageTool";
 import type {
   AgentPlanProgressStep,
   AgentProgressEvent,
+  AgentHistoryMessage,
   ToolName,
 } from "@/types";
 
@@ -49,11 +50,13 @@ export class Executor {
     intents,
     image,
     onProgress,
+    history,
   }: {
     input: string;
     intents: IntentName[];
     image?: ImageInput;
     onProgress?: (event: AgentProgressEvent) => void;
+    history?: AgentHistoryMessage[];
   }) {
     const plan = this.#normalizePlan(intents, { hasImage: Boolean(image) });
     const planSteps: AgentPlanProgressStep[] = plan.map((tool, index) => ({
@@ -79,7 +82,6 @@ export class Executor {
       plan,
     };
 
-    console.error(plan);
     for (let index = 0; index < plan.length; index += 1) {
       const step = plan[index];
       const stepMeta = planSteps[index];
@@ -92,6 +94,7 @@ export class Executor {
           const answer = await this.tools.chat.reply({
             input,
             context: context.web,
+            history,
           });
           context.outputs.push({ step, answer });
           if (stepMeta) {

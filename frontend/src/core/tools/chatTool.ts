@@ -1,6 +1,7 @@
 import { resolveAuth } from "../config";
 import { logger } from "../logger";
 import { getOpenAIClient } from "./openaiClient";
+import type { AgentHistoryMessage } from "@/types";
 
 const now = () =>
   typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -14,10 +15,12 @@ export class ChatTool {
     input,
     context,
     model,
+    history,
   }: {
     input: string;
     context?: any;
     model?: string;
+    history?: AgentHistoryMessage[];
   }) {
     const auth = resolveAuth("chat");
     const client = getOpenAIClient(auth);
@@ -29,18 +32,35 @@ export class ChatTool {
       provider: auth.model.provider,
     });
 
-    const messages: { role: "user" | "system"; content: string }[] = [
-      { role: "user", content: input },
-    ];
+    const messages: {
+      role: "system" | "user" | "assistant";
+      content: string;
+    }[] = [];
 
     if (context) {
-      messages.unshift({
+      messages.push({
         role: "system",
         content: `Context (web search results, if any):\n${JSON.stringify(
           context
         )}`,
       });
     }
+
+    if (Array.isArray(history) && history.length > 0) {
+      history
+        .filter(
+          (entry): entry is AgentHistoryMessage =>
+            Boolean(entry?.content) && (entry?.role === "user" || entry?.role === "assistant")
+        )
+        .forEach((entry) => {
+          messages.push({
+            role: entry.role,
+            content: entry.content,
+          });
+        });
+    }
+
+    messages.push({ role: "user", content: input });
 
     try {
       const completion = await client.agent.completions.create({

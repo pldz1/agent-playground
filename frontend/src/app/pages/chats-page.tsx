@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, useCallback, FormEvent } from 'react';
+import { useEffect, useMemo, useState, useCallback, FormEvent, useRef } from 'react';
 import { agent } from '@/core';
 import {
   getSessions,
   saveSession,
   deleteSession,
   renameSession,
+  useAppStore,
 } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
 import type {
@@ -81,15 +82,15 @@ const fileToDataUrl = (file: File): Promise<string> =>
   });
 
 const TOOL_LABELS: Record<ToolName, string> = {
-  chat: '对话',
-  webSearch: '搜索',
-  reasoning: '思考',
-  image_generate: '图片生成',
-  image_understand: '图片理解',
+  chat: 'Chat',
+  webSearch: 'WebSearch',
+  reasoning: 'Reasoning',
+  image_generate: 'Generating image',
+  image_understand: 'Understand image',
 };
 
 const ROUTE_ENTRY_ID = 'route';
-const ROUTE_LABEL = 'Route 推测';
+const ROUTE_LABEL = 'Route: Inferred intention';
 
 const describeTool = (tool: ToolName) => TOOL_LABELS[tool] ?? tool;
 
@@ -108,6 +109,8 @@ export function ChatsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
+  const chatContextLength = useAppStore((state) => state.settings.chatContextLength);
+  const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loaded = getSessions().sort((a, b) => b.updatedAt - a.updatedAt);
@@ -148,8 +151,8 @@ export function ChatsPage({
         details.push('Lack Base URL');
       }
       const target = issue.modelName ?? issue.modelLabel ?? '';
-      const suffix = target ? `（${target}）` : '';
-      return `${issue.roleLabel}${suffix}：${details.join('，') || 'Configuration missing'}`;
+      const suffix = target ? `(${target})` : '';
+      return `${issue.roleLabel}${suffix}: ${details.join(',') || 'Configuration missing'}`;
     });
   }, [configIssues]);
 
@@ -231,14 +234,14 @@ export function ChatsPage({
               id: ROUTE_ENTRY_ID,
               label: ROUTE_LABEL,
               status: 'running',
-              detail: '正在分析意图...',
+              detail: 'Analyzing intent...',
             },
           ];
         case 'route:complete': {
           const detail =
             event.intents && event.intents.length
-              ? `推测结果：${event.intents.join(' / ')}`
-              : '未能识别意图';
+              ? `Intents: ${event.intents.join(' / ')}`
+              : 'Unable to identify the intent.';
           return ensureRouteEntry('success', detail);
         }
         case 'plan:ready': {
@@ -249,7 +252,7 @@ export function ChatsPage({
               id: step.id,
               label: describeTool(step.tool),
               status: 'pending' as const,
-              detail: `等待执行 ${describeTool(step.tool)}`,
+              detail: `Waiting for execution: ${describeTool(step.tool)}`,
             }));
           return [...prev, ...pendingSteps];
         }
@@ -259,7 +262,7 @@ export function ChatsPage({
               ? {
                 ...entry,
                 status: 'running',
-                detail: `正在${describeTool(event.step.tool)}`,
+                detail: `${describeTool(event.step.tool)} ...`,
               }
               : entry,
           );
@@ -269,7 +272,7 @@ export function ChatsPage({
               ? {
                 ...entry,
                 status: 'success',
-                detail: `${describeTool(event.step.tool)} 完成`,
+                detail: `${describeTool(event.step.tool)} completed.`,
               }
               : entry,
           );
@@ -289,6 +292,10 @@ export function ChatsPage({
       }
     });
   }, []);
+
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [currentSessionId, currentSession?.messages.length, progressEntries.length]);
 
   const handleSendMessage = useCallback(
     async (text: string, imageFile?: File) => {
@@ -339,10 +346,41 @@ export function ChatsPage({
       upsertSession(sessionAfterUser);
       setIsProcessing(true);
 
+      const historyLimit = Math.max(0, chatContextLength);
+      const precedingMessages =
+        historyLimit > 0
+          ? sessionAfterUser.messages.slice(
+            Math.max(0, sessionAfterUser.messages.length - 1 - historyLimit),
+            Math.max(0, sessionAfterUser.messages.length - 1),
+          )
+          : [];
+      const history =
+        precedingMessages.length > 0
+          ? precedingMessages
+            .filter((message) => message.role === 'user' || message.role === 'assistant')
+            .map((message) => {
+              const trimmed = message.content.trim();
+              const content =
+                trimmed ||
+                (message.images?.length
+                  ? `[Image message x${message.images.length}]`
+                  : '');
+              return content
+                ? {
+                  role: message.role,
+                  content,
+                }
+                : null;
+            })
+            .filter((entry): entry is { role: 'user' | 'assistant'; content: string } => Boolean(entry))
+          : [];
+      const historyInput = history.length > 0 ? history : undefined;
+
       try {
         const result = await agent.handle({
           text,
           image: imageData,
+          history: historyInput,
           onProgress: handleAgentProgress,
         });
 
@@ -380,7 +418,14 @@ export function ChatsPage({
         setProgressEntries([]);
       }
     },
-    [currentSessionId, ensureSession, handleAgentProgress, isModelConfigured, upsertSession],
+    [
+      chatContextLength,
+      currentSessionId,
+      ensureSession,
+      handleAgentProgress,
+      isModelConfigured,
+      upsertSession,
+    ],
   );
 
   const handleDeleteCurrentSession = useCallback(() => {
@@ -521,6 +566,7 @@ export function ChatsPage({
                     <ChatProgress entries={progressEntries} />
                   )}
                 </div>
+                <div ref={messageEndRef} className="h-0" />
               </ScrollArea>
             </div>
 

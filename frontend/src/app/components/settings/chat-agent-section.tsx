@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AppSettings } from "@/types";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -28,6 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "../../components/ui/tooltip";
+import { Slider } from "../../components/ui/slider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +61,7 @@ interface ChatAgentSectionProps {
   onOpenCreateDrawer: () => void;
   onOpenEditDrawer: (modelLabel: string) => void;
   onDeleteModel: (modelLabel: string) => void;
+  onContextLengthChange: (value: number) => void;
 }
 
 export function ChatAgentSection({
@@ -68,9 +70,24 @@ export function ChatAgentSection({
   onOpenCreateDrawer,
   onOpenEditDrawer,
   onDeleteModel,
+  onContextLengthChange,
 }: ChatAgentSectionProps) {
-  const [routingOpen, setRoutingOpen] = useState(false);
+  const [routingOpen, setRoutingOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(true);
+  const [contextLengthDraft, setContextLengthDraft] = useState(
+    () => Math.max(1, settings.chatContextLength || 1)
+  );
+
+  useEffect(() => {
+    setContextLengthDraft(Math.max(1, settings.chatContextLength || 1));
+  }, [settings.chatContextLength]);
+
+  const handleContextLengthChange = (value: number[]) => {
+    if (!value.length) return;
+    const next = Math.min(Math.max(Math.round(value[0]), 1), 30);
+    setContextLengthDraft(next);
+    onContextLengthChange(next);
+  };
 
   return (
     <>
@@ -102,6 +119,28 @@ export function ChatAgentSection({
             </div>
 
             <CollapsibleContent className="mt-2">
+              <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+                <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Conversation Memory
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Controls how many previous messages are sent to the chat
+                  model for each reply.
+                </p>
+                <div className="mt-3 flex flex-col gap-3">
+                  <Slider
+                    value={[contextLengthDraft]}
+                    min={1}
+                    max={30}
+                    step={1}
+                    onValueChange={handleContextLengthChange}
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {contextLengthDraft} message
+                    {contextLengthDraft === 1 ? "" : "s"}
+                  </span>
+                </div>
+              </div>
               <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-gray-800 dark:border-gray-800">
                 {(Object.keys(MODEL_SELECT_COPY) as ModelSettingKey[]).map(
                   (key) => {

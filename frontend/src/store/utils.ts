@@ -19,6 +19,7 @@ export const defaultSettings: AppSettings = {
   visionModel: "",
   webSearchModel: "",
   imageModel: "",
+  chatContextLength: 6,
   models: [],
 };
 
@@ -134,6 +135,17 @@ export const normalizeSettings = (
     return fallbackModelLabel;
   };
 
+  const parseContextLength = (value: unknown, fallback: number): number => {
+    const parsed =
+      typeof value === "number"
+        ? value
+        : typeof value === "string"
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+    if (Number.isNaN(parsed) || parsed < 0) return fallback;
+    return Math.min(parsed, 50);
+  };
+
   return {
     debugMode: Boolean(source.debugMode ?? base.debugMode),
     exportFormat:
@@ -144,6 +156,10 @@ export const normalizeSettings = (
     webSearchModel: pickModel(source.webSearchModel, base.webSearchModel),
     imageModel: pickModel(source.imageModel, base.imageModel),
     visionModel: pickModel(source.visionModel, base.visionModel),
+    chatContextLength: parseContextLength(
+      source.chatContextLength,
+      base.chatContextLength
+    ),
     models,
   };
 };

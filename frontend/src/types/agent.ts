@@ -59,6 +59,11 @@ export interface ToolOutput {
   error?: string;
 }
 
+export interface AgentHistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface AgentPlanProgressStep {
   id: string;
   tool: ToolName;
@@ -77,6 +82,7 @@ export interface AgentInput {
   text: string;
   image?: File | string;
   onProgress?: (event: AgentProgressEvent) => void;
+  history?: AgentHistoryMessage[];
 }
 
 export interface AgentOutput {

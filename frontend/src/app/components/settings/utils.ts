@@ -113,7 +113,7 @@ export const CAPABILITY_METADATA: Array<{
   },
   {
     key: "image",
-    label: "Image editing or generation",
+    label: "Imaging",
     description: "Creates images from textual prompts.",
     icon: ImageIcon,
   },

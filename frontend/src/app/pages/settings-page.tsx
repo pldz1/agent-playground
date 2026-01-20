@@ -251,6 +251,9 @@ export function SettingsPage({
                 onOpenCreateDrawer={openCreateDrawer}
                 onOpenEditDrawer={openEditDrawer}
                 onDeleteModel={handleDeleteModel}
+                onContextLengthChange={(value) =>
+                  handleSettingChange("chatContextLength", value)
+                }
               />
             )}
 

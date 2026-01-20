@@ -23,6 +23,7 @@ export interface AppSettings {
   reasoningModel: string;
   visionModel: string;
   imageModel: string;
+  chatContextLength: number;
   models: ModelConfig[];
 }
 

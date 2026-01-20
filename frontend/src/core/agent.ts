@@ -195,10 +195,12 @@ export class CoreAgent {
     input,
     image,
     onProgress,
+    history,
   }: {
     input: string;
     image?: ImageInput;
     onProgress?: (event: AgentProgressEvent) => void;
+    history?: AgentInput["history"];
   }): Promise<{
     routing: any;
     plan: any;
@@ -218,6 +220,7 @@ export class CoreAgent {
       intents: routing.intents,
       image,
       onProgress,
+      history,
     });
 
     return {
@@ -240,6 +243,7 @@ export class Agent {
       input: input.text,
       image,
       onProgress: input.onProgress,
+      history: input.history,
     });
 
     const plan = Array.isArray(result.plan)
