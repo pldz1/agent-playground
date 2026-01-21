@@ -17,32 +17,10 @@ export interface PlanStep {
   description: string;
 }
 
-export interface WebSearchOutput {
-  query: string;
-  output_text: string;
-  sources?: string[];
-}
-
-export interface ReasoningOutput {
-  answer: {
-    text: string;
-  };
-}
-
-export interface ChatOutput {
-  message: {
-    text: string;
-  };
-}
-
-export interface ImageGenerateOutput {
-  images: string[];
-  prompt: string;
-}
-
-export interface ImageUnderstandOutput {
-  caption: string;
-  description: string;
+export interface ToolRunResult {
+  text?: string;
+  image?: string;
+  raw?: any;
 }
 
 export interface ToolOutput {

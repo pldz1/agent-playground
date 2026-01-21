@@ -7,6 +7,7 @@ import type {
   AgentProgressEvent,
   AgentHistoryMessage,
   ToolName,
+  ToolRunResult,
 } from '@/types';
 
 export type IntentName = 'chat' | 'webSearch' | 'reasoning' | 'image_generate' | 'image_understand';
@@ -14,11 +15,11 @@ export type IntentName = 'chat' | 'webSearch' | 'reasoning' | 'image_generate' |
 export type ImageInput = { data?: string; url?: string; mimeType?: string };
 
 export type ToolRunOutput =
-  | { step: 'webSearch'; web: any }
-  | { step: 'reasoning'; answer: any }
-  | { step: 'chat'; answer: any }
-  | { step: 'image_generate'; result: any }
-  | { step: 'image_understand'; result: any }
+  | { step: 'webSearch'; result: ToolRunResult }
+  | { step: 'reasoning'; result: ToolRunResult }
+  | { step: 'chat'; result: ToolRunResult }
+  | { step: 'image_generate'; result: ToolRunResult }
+  | { step: 'image_understand'; result: ToolRunResult }
   | { step: string; error: string };
 
 export class Executor {
@@ -66,13 +67,11 @@ export class Executor {
     let context: {
       input: string;
       image?: ImageInput;
-      web: any;
       outputs: ToolRunOutput[];
       plan: IntentName[];
     } = {
       input,
       image,
-      web: null,
       outputs: [],
       plan,
     };
@@ -86,12 +85,11 @@ export class Executor {
 
       try {
         if (step === 'chat') {
-          const answer = await this.tools.chat.reply({
+          const result = await this.tools.chat.reply({
             input,
-            context: context.web,
             history,
           });
-          context.outputs.push({ step, answer });
+          context.outputs.push({ step, result });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -99,9 +97,8 @@ export class Executor {
         }
 
         if (step === 'webSearch') {
-          const web = await this.tools.webSearch.search({ input });
-          context.web = web;
-          context.outputs.push({ step, web });
+          const result = await this.tools.webSearch.search({ input });
+          context.outputs.push({ step, result });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -109,11 +106,10 @@ export class Executor {
         }
 
         if (step === 'reasoning') {
-          const answer = await this.tools.reasoning.think({
+          const result = await this.tools.reasoning.think({
             input,
-            context: context.web,
           });
-          context.outputs.push({ step, answer });
+          context.outputs.push({ step, result });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -170,22 +166,6 @@ export class Executor {
     for (const intent of intents || []) {
       if (!unique.includes(intent)) unique.push(intent);
     }
-
-    // if (hasImage && !unique.includes("image_understand")) {
-    //   unique.unshift("image_understand");
-    // }
-
-    // if (unique.includes("webSearch")) {
-    //   if (!unique.includes("reasoning") && !unique.includes("chat")) {
-    //     unique.push("chat");
-    //   }
-    //   unique.sort((a, b) => {
-    //     const order: IntentName[] = ["webSearch", "reasoning", "chat"];
-    //     const ai = order.includes(a) ? order.indexOf(a) : 99;
-    //     const bi = order.includes(b) ? order.indexOf(b) : 99;
-    //     return ai - bi;
-    //   });
-    // }
 
     if (!unique.length) unique.push('chat');
     return unique;

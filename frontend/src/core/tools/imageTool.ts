@@ -111,10 +111,11 @@ export class ImageTool {
       durationMs: duration,
     });
 
-    const data = await res.json();
+    const response = await res.json();
+
     return {
-      savedFiles: [],
-      data,
+      image: response.data[0].b64_json,
+      raw: response,
     };
   }
 

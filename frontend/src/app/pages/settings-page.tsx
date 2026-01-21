@@ -9,7 +9,13 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
-import { clearAllSessions, getSettings, saveSettings } from '@/store';
+import {
+  clearAllSessions,
+  getSettings,
+  saveSettings,
+  defaultSettings,
+  normalizeSettings,
+} from '@/store';
 import type { AppSettings, ModelConfig } from '@/types';
 import { copyToClipboard } from '../helpers/export';
 import {
@@ -157,6 +163,17 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
     toast.success('All sessions cleared');
   };
 
+  const handleImportConfig = (raw: unknown): boolean => {
+    if (raw === null || typeof raw !== 'object') {
+      toast.error('Configuration must be a JSON object');
+      return false;
+    }
+
+    const normalized = normalizeSettings(raw, defaultSettings);
+    persistSettings(normalized);
+    return true;
+  };
+
   const activeSectionMeta = SETTINGS_SECTIONS.find((section) => section.id === activeSection);
 
   return (
@@ -227,6 +244,7 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
               <DataManagementSection
                 onCopyConfig={handleCopyConfig}
                 onClearAllData={handleClearAllData}
+                onImportConfig={handleImportConfig}
               />
             )}
           </div>

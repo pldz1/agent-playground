@@ -1,18 +1,34 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { ToolOutput } from '@/types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { CheckCircle2, XCircle, Clock, Loader2, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, Copy } from 'lucide-react';
 import { copyToClipboard } from '../helpers/export';
 import { toast } from 'sonner';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 interface StepCardProps {
   output: ToolOutput;
 }
 
+function sanitizeLargeFields(data: any) {
+  return JSON.parse(
+    JSON.stringify(data, (key, value) => {
+      // 过滤 base64 图片
+      if (typeof value === 'string' && value.startsWith('data:image') && value.length > 200) {
+        return `[Base64 Image omitted, length=${value.length}]`;
+      }
+
+      // 防止其他超长字符串
+      if (typeof value === 'string' && value.length > 5000) {
+        return `[Long string omitted, length=${value.length}]`;
+      }
+
+      return value;
+    }),
+  );
+}
+
 export function StepCard({ output }: StepCardProps) {
-  const [expanded, setExpanded] = useState(false);
   const [rawVisible, setRawVisible] = useState(false);
 
   const getStatusIcon = () => {
@@ -28,109 +44,16 @@ export function StepCard({ output }: StepCardProps) {
     }
   };
 
+  // ✅ 只在展开 raw 时才 stringify
+  const rawJson = useMemo(() => {
+    if (!rawVisible || !output.data) return null;
+    return JSON.stringify(sanitizeLargeFields(output.data), null, 2);
+  }, [rawVisible, output.data]);
+
   const handleCopy = async () => {
-    const success = await copyToClipboard(JSON.stringify(output.data, null, 2));
-    if (success) {
-      toast.success('Copied to clipboard');
-    } else {
-      toast.error('Failed to copy');
-    }
-  };
-
-  const renderToolOutput = () => {
-    switch (output.tool) {
-      case 'webSearch':
-        return (
-          <div className="space-y-2">
-            {output.data?.query && (
-              <p className="text-sm">
-                <span className="font-medium">Query: </span>
-                {output.data.query}
-              </p>
-            )}
-            <Collapsible open={expanded} onOpenChange={setExpanded}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                  {expanded ? 'Hide' : 'Show'} search results
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-                  {output.data?.output_text}
-                </div>
-                {output.data?.sources && output.data.sources.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs font-medium">Sources:</p>
-                    {output.data.sources.map((source: string, idx: number) => (
-                      <a
-                        key={idx}
-                        href={source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-500 hover:underline block"
-                      >
-                        {source}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        );
-
-      case 'reasoning':
-        return (
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-            {output.data?.answer?.text}
-          </div>
-        );
-
-      case 'chat':
-        return (
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-            {output.data?.message?.text}
-          </div>
-        );
-
-      case 'image_generate':
-        return (
-          <div className="space-y-2">
-            {output.data?.prompt && (
-              <p className="text-sm">
-                <span className="font-medium">Prompt: </span>
-                {output.data.prompt}
-              </p>
-            )}
-            {output.data?.images && output.data.images.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {output.data.images.map((img: string, idx: number) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={`Generated ${idx + 1}`}
-                    className="w-full rounded-lg"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-
-      case 'image_understand':
-        return (
-          <div className="space-y-2">
-            {output.data?.caption && <p className="text-sm font-medium">{output.data.caption}</p>}
-            {output.data?.description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{output.data.description}</p>
-            )}
-          </div>
-        );
-
-      default:
-        return <div className="text-sm text-gray-500">Output data available in raw JSON</div>;
-    }
+    if (!rawJson) return;
+    const success = await copyToClipboard(rawJson);
+    success ? toast.success('Copied to clipboard') : toast.error('Failed to copy');
   };
 
   return (
@@ -149,26 +72,23 @@ export function StepCard({ output }: StepCardProps) {
           <Button variant="ghost" size="sm" onClick={handleCopy}>
             <Copy className="size-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setRawVisible(!rawVisible)}>
+          <Button variant="ghost" size="sm" onClick={() => setRawVisible((v) => !v)}>
             {rawVisible ? 'Hide' : 'View'} raw
           </Button>
         </div>
       </div>
 
-      {/* Error message */}
+      {/* Error */}
       {output.error && (
         <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
           {output.error}
         </div>
       )}
 
-      {/* Body */}
-      {output.status === 'success' && <div className="mb-3">{renderToolOutput()}</div>}
-
       {/* Raw JSON */}
-      {rawVisible && (
-        <div className="mt-3 p-3 bg-gray-900 dark:bg-black rounded-lg overflow-x-auto">
-          <pre className="text-xs text-gray-100">{JSON.stringify(output.data, null, 2)}</pre>
+      {rawVisible && rawJson && (
+        <div className="mt-3 p-3 bg-gray-900 dark:bg-black rounded-lg overflow-x-auto max-h-[400px]">
+          <pre className="text-xs text-gray-100 whitespace-pre-wrap">{rawJson}</pre>
         </div>
       )}
     </Card>

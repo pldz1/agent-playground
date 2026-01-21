@@ -1,11 +1,14 @@
 import { resolveAuth } from '../config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
+import { AgentHistoryMessage, ToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+export type WebSearchToolInput = { model?: string; input: string; history?: AgentHistoryMessage[] };
+
 export class WebSearchTool {
-  async search({ model, input }: { model?: string; input: string }) {
+  async search({ model, input }: WebSearchToolInput): Promise<ToolRunResult> {
     const auth = resolveAuth('webSearch');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
@@ -30,10 +33,8 @@ export class WebSearchTool {
       });
 
       return {
-        query: input,
-        output_text: response.output[1].content[0].text,
-        response,
-        fetchedAt: new Date().toISOString(),
+        text: response.output[1].content[0].text,
+        raw: response,
       };
     } catch (error) {
       logger.error('WebSearchTool.search:error', {

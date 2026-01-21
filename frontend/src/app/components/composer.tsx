@@ -90,8 +90,8 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
           file.name && file.name.trim().length > 0
             ? file
             : new File([file], `clipboard-image-${Date.now()}.png`, {
-              type: file.type,
-            });
+                type: file.type,
+              });
         handleImageSelect(namedFile);
         break;
       }

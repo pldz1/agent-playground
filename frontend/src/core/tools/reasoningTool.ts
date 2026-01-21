@@ -2,11 +2,14 @@ import { resolveAuth } from '../config';
 import { logger } from '../logger';
 import { reasoningPrompt } from '../prompts/reasoningPrompt';
 import { getOpenAIClient } from './openaiClient';
+import { AgentHistoryMessage, ToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+export type ReasoningToolInput = { input: string; model?: string; history?: AgentHistoryMessage[] };
+
 export class ReasoningTool {
-  async think({ input, context, model }: { input: string; context?: any; model?: string }) {
+  async think({ input, model }: ReasoningToolInput): Promise<ToolRunResult> {
     const auth = resolveAuth('reasoning');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
@@ -18,13 +21,10 @@ export class ReasoningTool {
     });
 
     try {
-      const completion = await client.agent.completions.create({
+      const response = await client.agent.completions.create({
         messages: [
           { role: 'system', content: reasoningPrompt },
-          {
-            role: 'user',
-            content: `user: ${input}\ncontext: ${context ? JSON.stringify(context) : 'null'}`,
-          },
+          { role: 'user', content: input },
         ],
         model: modelName,
         reasoning_effort: 'medium',
@@ -37,8 +37,8 @@ export class ReasoningTool {
       });
 
       return {
-        text: completion.choices?.[0]?.message?.content ?? '',
-        choice: completion.choices?.[0],
+        text: response.choices?.[0]?.message?.content ?? '',
+        raw: response,
       };
     } catch (error) {
       logger.error('ReasoningTool.think:error', {

@@ -3,6 +3,8 @@ import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { StepCard } from './step-card';
 import { MdPreview } from 'md-editor-rt';
+
+import appIcon from '../../assets/app.svg';
 import 'md-editor-rt/lib/style.css';
 
 interface MessageCardProps {
@@ -21,7 +23,7 @@ export function MessageCard({ message, debugMode }: MessageCardProps) {
       {!isUser && (
         <Avatar className="size-8 mt-1">
           <AvatarFallback className="bg-transparent text-white">
-            <img src="/app.svg" alt="App" className="size-6" />
+            <img src={appIcon} alt="App" className="size-6" />
           </AvatarFallback>
         </Avatar>
       )}
@@ -50,7 +52,7 @@ export function MessageCard({ message, debugMode }: MessageCardProps) {
               showCodeRowNumber={false}
               autoFoldThreshold={1000}
               codeFoldable={true}
-              noImgZoomIn
+              noImgZoomIn={false}
             />
           )}
 

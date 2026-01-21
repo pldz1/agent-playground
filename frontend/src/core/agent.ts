@@ -49,82 +49,11 @@ function toToolOutput({
       error: output.error,
     };
   }
-
-  switch (output.step) {
-    case 'webSearch':
-      return {
-        ...base,
-        status: 'success',
-        data: {
-          query: inputText,
-          output_text: output.web?.output_text,
-          sources: [],
-          raw: output.web,
-        },
-      };
-    case 'reasoning':
-      return {
-        ...base,
-        status: 'success',
-        data: {
-          answer: {
-            text: output.answer?.text ?? '',
-          },
-          raw: output.answer,
-        },
-      };
-    case 'chat':
-      return {
-        ...base,
-        status: 'success',
-        data: {
-          message: {
-            text: output.answer?.text ?? '',
-          },
-          raw: output.answer,
-        },
-      };
-    case 'image_generate': {
-      const candidates = Array.isArray(output.result?.data?.data) ? output.result.data.data : [];
-      const images = candidates
-        .map((candidate: any) => {
-          if (typeof candidate?.b64_json === 'string') {
-            return `data:image/png;base64,${candidate.b64_json}`;
-          }
-          if (typeof candidate?.url === 'string') {
-            return candidate.url;
-          }
-          return null;
-        })
-        .filter((url: any): url is string => Boolean(url));
-
-      return {
-        ...base,
-        status: 'success',
-        data: {
-          prompt: inputText,
-          images,
-          raw: output.result,
-        },
-      };
-    }
-    case 'image_understand':
-      return {
-        ...base,
-        status: 'success',
-        data: {
-          caption: 'Image understanding result',
-          description: output.result?.text ?? '',
-          raw: output.result,
-        },
-      };
-    default:
-      return {
-        ...base,
-        status: 'success',
-        data: output,
-      };
-  }
+  return {
+    ...base,
+    status: 'success',
+    data: output,
+  };
 }
 
 function pickFinalAnswer(outputs: ToolRunOutput[]): string {
@@ -137,24 +66,24 @@ function pickFinalAnswer(outputs: ToolRunOutput[]): string {
       return current.error;
     }
 
-    if (current.step === 'chat' && current.answer?.text) {
-      return current.answer.text;
+    if (current.step === 'chat' && current.result?.text) {
+      return current.result.text;
     }
 
-    if (current.step === 'reasoning' && current.answer?.text) {
-      return current.answer.text;
+    if (current.step === 'reasoning' && current.result?.text) {
+      return current.result.text;
     }
 
-    if (current.step === 'webSearch' && current.web?.output_text) {
-      return current.web.output_text;
+    if (current.step === 'webSearch' && current.result?.text) {
+      return current.result?.text;
     }
 
     if (current.step === 'image_understand' && current.result?.text) {
       return current.result.text;
     }
 
-    if (current.step === 'image_generate') {
-      return `![image-${current.result.data.created}](${current.result.data.data[0].b64_json})`;
+    if (current.step === 'image_generate' && current.result?.image) {
+      return `![image](data:image/png;base64,${current.result.image})`;
     }
   }
 
@@ -205,7 +134,6 @@ export class CoreAgent {
     outputs: any;
     input: string;
     image?: ImageInput;
-    web: any;
   }> {
     onProgress?.({ type: 'route:start' });
     const routing = await route({ input, hasImage: Boolean(image) });

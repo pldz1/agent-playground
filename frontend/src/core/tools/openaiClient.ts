@@ -65,7 +65,7 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
 
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      logger.error(`${auth.role} ← ${res.status}`, {
+      logger.error(`${auth.role} - ${res.status}`, {
         path,
         status: res.status,
         body: text,
@@ -74,7 +74,7 @@ export function getOpenAIClient(auth: RuntimeAuthConfig) {
       throw new Error(`OpenAI request failed: ${res.status} ${text}`);
     }
 
-    logger.debug(`${auth.role} ← ${res.status}`, {
+    logger.debug(`${auth.role} - ${res.status}`, {
       path,
       status: res.status,
       durationMs: elapsed,

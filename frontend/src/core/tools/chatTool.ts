@@ -1,26 +1,22 @@
 import { resolveAuth } from '../config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
-import type { AgentHistoryMessage } from '@/types';
+import type { AgentHistoryMessage, ToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+export type ChatToolInput = {
+  input: string;
+  model?: string;
+  history?: AgentHistoryMessage[];
+};
+
+/**
+ * ChatTool: fast, low-cost conversation.
+ * No routing/decision logic here.
+ */
 export class ChatTool {
-  /**
-   * ChatTool: fast, low-cost conversation.
-   * No routing/decision logic here.
-   */
-  async reply({
-    input,
-    context,
-    model,
-    history,
-  }: {
-    input: string;
-    context?: any;
-    model?: string;
-    history?: AgentHistoryMessage[];
-  }) {
+  async reply({ input, model, history }: ChatToolInput): Promise<ToolRunResult> {
     const auth = resolveAuth('chat');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
@@ -35,13 +31,6 @@ export class ChatTool {
       role: 'system' | 'user' | 'assistant';
       content: string;
     }[] = [];
-
-    if (context) {
-      messages.push({
-        role: 'system',
-        content: `Context (web search results, if any):\n${JSON.stringify(context)}`,
-      });
-    }
 
     if (Array.isArray(history) && history.length > 0) {
       history
@@ -60,7 +49,7 @@ export class ChatTool {
     messages.push({ role: 'user', content: input });
 
     try {
-      const completion = await client.agent.completions.create({
+      const response = await client.agent.completions.create({
         messages,
         model: modelName,
       });
@@ -72,8 +61,8 @@ export class ChatTool {
       });
 
       return {
-        text: completion.choices?.[0]?.message?.content ?? '',
-        choice: completion.choices?.[0],
+        text: response.choices?.[0]?.message?.content ?? '',
+        raw: response,
       };
     } catch (error) {
       logger.error('ChatTool.reply:error', {
