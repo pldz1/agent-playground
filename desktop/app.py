@@ -135,7 +135,11 @@ def start_webview():
         print("window.open 已被重写：将使用默认浏览器打开链接")
 
     window.events.loaded += lambda: override_window_open()
-    webview.start()
+
+    webview.start(
+        private_mode=False,        # 必须设为 False，关闭私有模式
+        storage_path= os.path.join(current_dir, 'app_data') # 指定一个固定目录存放缓存、IndexedDB 和 Cookie
+    )
 
 
 # -----------------------------
