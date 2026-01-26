@@ -1,14 +1,14 @@
-import { resolveAuth } from '../config';
+import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
-import type { AgentHistoryMessage, ToolRunResult } from '@/types';
+import type { ChatAgentHistoryMessage, ChatAgentToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export type ChatToolInput = {
   input: string;
   model?: string;
-  history?: AgentHistoryMessage[];
+  history?: ChatAgentHistoryMessage[];
 };
 
 /**
@@ -16,7 +16,7 @@ export type ChatToolInput = {
  * No routing/decision logic here.
  */
 export class ChatTool {
-  async reply({ input, model, history }: ChatToolInput): Promise<ToolRunResult> {
+  async reply({ input, model, history }: ChatToolInput): Promise<ChatAgentToolRunResult> {
     const auth = resolveAuth('chat');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
@@ -35,7 +35,7 @@ export class ChatTool {
     if (Array.isArray(history) && history.length > 0) {
       history
         .filter(
-          (entry): entry is AgentHistoryMessage =>
+          (entry): entry is ChatAgentHistoryMessage =>
             Boolean(entry?.content) && (entry?.role === 'user' || entry?.role === 'assistant'),
         )
         .forEach((entry) => {

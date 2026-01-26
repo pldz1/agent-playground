@@ -82,10 +82,6 @@ export const useAppStore = create<StoreState>((set, get) => ({
     try {
       const data = await getItem(SETTINGS_KEY);
       const parsed = data ? JSON.parse(data) : {};
-      if (parsed?.chatModel && !parsed.chatModel) {
-        parsed.chatModel = parsed.chatModel;
-        delete parsed.chatModel;
-      }
       const settings = normalizeSettings(parsed, defaultSettings);
       set({ settings });
     } catch {

@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState, useCallback, FormEvent, useRef } from 'react';
-import { agent } from '@/core';
+import { chatAgent } from '@/core';
 import { getSessions, saveSession, deleteSession, renameSession, useAppStore } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
-import type { AgentProgressEvent, Message, ModelConfigIssue, Session, ToolName } from '@/types';
+import type {
+  ChatAgentProgressEvent,
+  ChatAgentToolName,
+  Message,
+  ModelConfigIssue,
+  Session,
+} from '@/types';
 import { MessageCard } from '../components/message-card';
 import { Composer } from '../components/composer';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -57,6 +63,11 @@ const limitTitle = (text: string, fallback = 'New chat') => {
   return trimmed.length > 32 ? `${trimmed.slice(0, 32)}…` : trimmed;
 };
 
+const stripInlineImageData = (text: string): string => {
+  if (!text) return '';
+  return text.replace(/!\[[^\]]*\]\((data:image\/[^)]+)\)/g, '[Image]').trim();
+};
+
 const fileToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -71,7 +82,7 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const TOOL_LABELS: Record<ToolName, string> = {
+const TOOL_LABELS: Record<ChatAgentToolName, string> = {
   chat: 'Chat',
   webSearch: 'WebSearch',
   reasoning: 'Reasoning',
@@ -82,7 +93,7 @@ const TOOL_LABELS: Record<ToolName, string> = {
 const ROUTE_ENTRY_ID = 'route';
 const ROUTE_LABEL = 'Route: Inferred intention';
 
-const describeTool = (tool: ToolName) => TOOL_LABELS[tool] ?? tool;
+const describeTool = (tool: ChatAgentToolName) => TOOL_LABELS[tool] ?? tool;
 
 export function ChatsPage({
   debugMode,
@@ -99,7 +110,7 @@ export function ChatsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
-  const chatContextLength = useAppStore((state) => state.settings.chatContextLength);
+  const chatContextLength = useAppStore((state) => state.settings.chatAgent.chatContextLength);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -197,7 +208,7 @@ export function ChatsPage({
     [createSession, sessions],
   );
 
-  const handleAgentProgress = useCallback((event: AgentProgressEvent) => {
+  const handleAgentProgress = useCallback((event: ChatAgentProgressEvent) => {
     setProgressEntries((prev) => {
       const ensureRouteEntry = (status: ChatProgressEntry['status'], detail: string) => {
         const hasRouteEntry = prev.some((entry) => entry.id === ROUTE_ENTRY_ID);
@@ -348,7 +359,7 @@ export function ChatsPage({
               .map((message) => {
                 const trimmed = message.content.trim();
                 const content =
-                  trimmed ||
+                  stripInlineImageData(trimmed) ||
                   (message.images?.length ? `[Image message x${message.images.length}]` : '');
                 return content
                   ? {
@@ -364,7 +375,7 @@ export function ChatsPage({
       const historyInput = history.length > 0 ? history : undefined;
 
       try {
-        const result = await agent.handle({
+        const result = await chatAgent.handle({
           text,
           image: imageData,
           history: historyInput,
@@ -374,7 +385,8 @@ export function ChatsPage({
         const assistantMessage: Message = {
           id: makeId(),
           role: 'assistant',
-          content: result.answer || '(No response yet)',
+          content: result.answer || (result.images?.length ? 'Image generated.' : '(No response yet)'),
+          images: result.images,
           timestamp: Date.now(),
           routing: result.routing,
           plan: result.plan,

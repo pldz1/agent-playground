@@ -6,24 +6,24 @@ const ROLE_META: Record<
 > = {
   routing: {
     roleLabel: 'Routing model',
-    select: (settings) => settings.routingModel,
+    select: (settings) => settings.chatAgent.routingModel,
   },
-  chat: { roleLabel: 'Chat model', select: (settings) => settings.chatModel },
+  chat: { roleLabel: 'Chat model', select: (settings) => settings.chatAgent.chatModel },
   vision: {
     roleLabel: 'Vision model',
-    select: (settings) => settings.visionModel,
+    select: (settings) => settings.chatAgent.visionModel,
   },
   reasoning: {
     roleLabel: 'Reasoning model',
-    select: (settings) => settings.reasoningModel,
+    select: (settings) => settings.chatAgent.reasoningModel,
   },
   webSearch: {
     roleLabel: 'Web search model',
-    select: (settings) => settings.webSearchModel,
+    select: (settings) => settings.chatAgent.webSearchModel,
   },
   image: {
     roleLabel: 'Image generation model',
-    select: (settings) => settings.imageModel,
+    select: (settings) => settings.chatAgent.imageModel,
   },
 };
 

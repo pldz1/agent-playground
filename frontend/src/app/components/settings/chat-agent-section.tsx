@@ -71,12 +71,12 @@ export function ChatAgentSection({
   const [routingOpen, setRoutingOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [contextLengthDraft, setContextLengthDraft] = useState(() =>
-    Math.max(1, settings.chatContextLength || 1),
+    Math.max(1, settings.chatAgent.chatContextLength || 1),
   );
 
   useEffect(() => {
-    setContextLengthDraft(Math.max(1, settings.chatContextLength || 1));
-  }, [settings.chatContextLength]);
+    setContextLengthDraft(Math.max(1, settings.chatAgent.chatContextLength || 1));
+  }, [settings.chatAgent.chatContextLength]);
 
   const handleContextLengthChange = (value: number[]) => {
     if (!value.length) return;
@@ -162,7 +162,7 @@ export function ChatAgentSection({
                         )}
                       </div>
                       <Select
-                        value={settings[key] || undefined}
+                        value={settings.chatAgent[key] || undefined}
                         onValueChange={(value) => onModelSelectionChange(key, value)}
                         disabled={!hasEligibleModels}
                       >

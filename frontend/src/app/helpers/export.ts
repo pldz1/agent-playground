@@ -1,4 +1,4 @@
-import type { Session, Message, AgentOutput } from '@/types';
+import type { ChatAgentOutput, Message, Session } from '@/types';
 
 export const exportSessionAsJSON = (session: Session): void => {
   const data = JSON.stringify(session, null, 2);
@@ -55,12 +55,12 @@ export const exportResultAsText = (message: Message): void => {
   downloadFile(text, `result-${message.id}.txt`, 'text/plain');
 };
 
-export const exportRoutingJSON = (result: AgentOutput): void => {
+export const exportRoutingJSON = (result: ChatAgentOutput): void => {
   const data = JSON.stringify(result.routing, null, 2);
   downloadFile(data, `routing-${Date.now()}.json`, 'application/json');
 };
 
-export const exportToolResponsesJSON = (result: AgentOutput): void => {
+export const exportToolResponsesJSON = (result: ChatAgentOutput): void => {
   const data = JSON.stringify(result.toolOutputs, null, 2);
   downloadFile(data, `tool-responses-${Date.now()}.json`, 'application/json');
 };

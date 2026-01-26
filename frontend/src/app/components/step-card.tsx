@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { ToolOutput } from '@/types';
+import type { ChatAgentToolOutput } from '@/types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { CheckCircle2, XCircle, Clock, Loader2, Copy } from 'lucide-react';
@@ -7,7 +7,7 @@ import { copyToClipboard } from '../helpers/export';
 import { toast } from 'sonner';
 
 interface StepCardProps {
-  output: ToolOutput;
+  output: ChatAgentToolOutput;
 }
 
 function sanitizeLargeFields(data: any) {

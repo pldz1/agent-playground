@@ -1,17 +1,21 @@
-import type { ImageInput, IntentName, ToolRunOutput } from './executor';
 import type {
-  AgentInput,
-  AgentOutput,
-  AgentProgressEvent,
-  PlanStep,
-  ToolName,
-  ToolOutput,
+  ChatAgentExecutorContext,
+  ChatAgentImageInput,
+  ChatAgentInput,
+  ChatAgentIntentName,
+  ChatAgentOutput,
+  ChatAgentPlanStep,
+  ChatAgentProgressEvent,
+  ChatAgentRouteResult,
+  ChatAgentToolName,
+  ChatAgentToolOutput,
+  ChatAgentToolRunOutput,
 } from '@/types';
 
 import { route } from './router';
 import { Executor } from './executor';
 
-const PLAN_DESCRIPTIONS: Record<IntentName, string> = {
+const PLAN_DESCRIPTIONS: Record<ChatAgentIntentName, string> = {
   chat: 'Chat message response',
   reasoning: 'Deep reasoning analysis',
   webSearch: 'Perform web search',
@@ -19,10 +23,10 @@ const PLAN_DESCRIPTIONS: Record<IntentName, string> = {
   image_understand: 'Understand image content',
 };
 
-function toPlan(plan: IntentName[] = []): PlanStep[] {
+function toPlan(plan: ChatAgentIntentName[] = []): ChatAgentPlanStep[] {
   return plan.map((tool, index) => ({
     id: `step-${index}`,
-    tool: tool as ToolName,
+    tool,
     description: PLAN_DESCRIPTIONS[tool] ?? tool,
   }));
 }
@@ -30,15 +34,13 @@ function toPlan(plan: IntentName[] = []): PlanStep[] {
 function toToolOutput({
   output,
   index,
-  inputText,
 }: {
-  output: ToolRunOutput;
+  output: ChatAgentToolRunOutput;
   index: number;
-  inputText: string;
-}): ToolOutput {
-  const base: Pick<ToolOutput, 'stepId' | 'tool'> = {
+}): ChatAgentToolOutput {
+  const base: Pick<ChatAgentToolOutput, 'stepId' | 'tool'> = {
     stepId: `step-${index}`,
-    tool: output.step as ToolName,
+    tool: output.step as ChatAgentToolName,
   };
 
   if ('error' in output) {
@@ -56,7 +58,7 @@ function toToolOutput({
   };
 }
 
-function pickFinalAnswer(outputs: ToolRunOutput[]): string {
+function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
   if (!outputs.length) return '';
 
   for (let i = outputs.length - 1; i >= 0; i -= 1) {
@@ -81,16 +83,38 @@ function pickFinalAnswer(outputs: ToolRunOutput[]): string {
     if (current.step === 'image_understand' && current.result?.text) {
       return current.result.text;
     }
-
-    if (current.step === 'image_generate' && current.result?.image) {
-      return `![image](data:image/png;base64,${current.result.image})`;
-    }
   }
 
   return '';
 }
 
-function parseImageInput(image?: AgentInput['image']): ImageInput | undefined {
+const INLINE_IMAGE_PATTERN = /!\[[^\]]*\]\((data:image\/[^)]+)\)/g;
+
+function extractInlineImages(text: string): { cleaned: string; images: string[] } {
+  if (!text) return { cleaned: '', images: [] };
+  const images: string[] = [];
+  const cleaned = text
+    .replace(INLINE_IMAGE_PATTERN, (_match, dataUrl: string) => {
+      images.push(dataUrl);
+      return '';
+    })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return { cleaned, images };
+}
+
+function collectImages(outputs: ChatAgentToolRunOutput[]): string[] {
+  const images: string[] = [];
+  for (const output of outputs) {
+    if ('error' in output) continue;
+    if (output.step === 'image_generate' && output.result?.image) {
+      images.push(`data:image/png;base64,${output.result.image}`);
+    }
+  }
+  return images;
+}
+
+function parseImageInput(image?: ChatAgentInput['image']): ChatAgentImageInput | undefined {
   if (!image) return undefined;
 
   if (typeof image === 'string') {
@@ -111,7 +135,7 @@ function parseImageInput(image?: AgentInput['image']): ImageInput | undefined {
   return undefined;
 }
 
-export class CoreAgent {
+export class ChatAgentCore {
   executor: Executor;
 
   constructor({ executor }: { executor?: Executor } = {}) {
@@ -125,21 +149,15 @@ export class CoreAgent {
     history,
   }: {
     input: string;
-    image?: ImageInput;
-    onProgress?: (event: AgentProgressEvent) => void;
-    history?: AgentInput['history'];
-  }): Promise<{
-    routing: any;
-    plan: any;
-    outputs: any;
-    input: string;
-    image?: ImageInput;
-  }> {
+    image?: ChatAgentImageInput;
+    onProgress?: (event: ChatAgentProgressEvent) => void;
+    history?: ChatAgentInput['history'];
+  }): Promise<ChatAgentExecutorContext & { routing: ChatAgentRouteResult }> {
     onProgress?.({ type: 'route:start' });
     const routing = await route({ input, hasImage: Boolean(image) });
     onProgress?.({
       type: 'route:complete',
-      intents: Array.isArray(routing.intents) ? routing.intents : [],
+      intents: routing.intents,
     });
     const result = await this.executor.run({
       input,
@@ -156,14 +174,14 @@ export class CoreAgent {
   }
 }
 
-export class Agent {
-  #core: CoreAgent;
+export class ChatAgent {
+  #core: ChatAgentCore;
 
-  constructor(coreAgent: CoreAgent = new CoreAgent()) {
+  constructor(coreAgent: ChatAgentCore = new ChatAgentCore()) {
     this.#core = coreAgent;
   }
 
-  async handle(input: AgentInput): Promise<AgentOutput> {
+  async handle(input: ChatAgentInput): Promise<ChatAgentOutput> {
     const image = parseImageInput(input.image);
     const result = await this.#core.handle({
       input: input.text,
@@ -172,23 +190,23 @@ export class Agent {
       history: input.history,
     });
 
-    const plan = Array.isArray(result.plan) ? (result.plan as IntentName[]) : [];
-    const outputs = Array.isArray(result.outputs) ? (result.outputs as ToolRunOutput[]) : [];
-    const intents = Array.isArray(result.routing?.intents)
-      ? (result.routing.intents as IntentName[])
-      : [];
+    const plan = result.plan;
+    const outputs = result.outputs;
+    const intents = result.routing.intents;
+    const answer = pickFinalAnswer(outputs);
+    const { cleaned, images: inlineImages } = extractInlineImages(answer);
+    const images = [...collectImages(outputs), ...inlineImages];
 
     return {
       routing: {
         intents: intents.map((name) => ({ name, confidence: 1 })),
       },
       plan: toPlan(plan),
-      toolOutputs: outputs.map((output, index) =>
-        toToolOutput({ output, index, inputText: input.text }),
-      ),
-      answer: pickFinalAnswer(outputs),
+      toolOutputs: outputs.map((output, index) => toToolOutput({ output, index })),
+      answer: cleaned,
+      images: images.length ? images : undefined,
     };
   }
 }
 
-export const agent = new Agent();
+export const chatAgent = new ChatAgent();

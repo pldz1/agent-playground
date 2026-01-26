@@ -1,14 +1,18 @@
-import { resolveAuth } from '../config';
+import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
-import { AgentHistoryMessage, ToolRunResult } from '@/types';
+import { ChatAgentHistoryMessage, ChatAgentToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-export type WebSearchToolInput = { model?: string; input: string; history?: AgentHistoryMessage[] };
+export type WebSearchToolInput = {
+  model?: string;
+  input: string;
+  history?: ChatAgentHistoryMessage[];
+};
 
 export class WebSearchTool {
-  async search({ model, input }: WebSearchToolInput): Promise<ToolRunResult> {
+  async search({ model, input }: WebSearchToolInput): Promise<ChatAgentToolRunResult> {
     const auth = resolveAuth('webSearch');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;

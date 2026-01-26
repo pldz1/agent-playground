@@ -16,7 +16,7 @@ import {
   defaultSettings,
   normalizeSettings,
 } from '@/store';
-import type { AppSettings, ModelConfig } from '@/types';
+import type { AppSettings, ChatAgentSettings, ModelConfig } from '@/types';
 import { copyToClipboard } from '../helpers/export';
 import {
   SETTINGS_SECTIONS,
@@ -59,6 +59,20 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
     persistSettings(next);
   };
 
+  const handleChatAgentSettingChange = <K extends keyof ChatAgentSettings>(
+    key: K,
+    value: ChatAgentSettings[K],
+  ) => {
+    const next = {
+      ...settings,
+      chatAgent: {
+        ...settings.chatAgent,
+        [key]: value,
+      },
+    };
+    persistSettings(next);
+  };
+
   const handleModelSelectionChange = (key: ModelSettingKey, value: string) => {
     const eligible = getEligibleModelsForSetting(key, settings.models);
     const isEligible = eligible.some((model) => model.label === value);
@@ -66,7 +80,7 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
       toast.error('This model does not support the required capability');
       return;
     }
-    handleSettingChange(key, value);
+    handleChatAgentSettingChange(key, value);
   };
 
   const handleModelsChange = (models: ModelConfig[]) => {
@@ -79,11 +93,14 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
     const next: AppSettings = {
       ...settings,
       models,
-      routingModel: ensureSelection('routingModel', settings.routingModel),
-      reasoningModel: ensureSelection('reasoningModel', settings.reasoningModel),
-      chatModel: ensureSelection('chatModel', settings.chatModel),
-      webSearchModel: ensureSelection('webSearchModel', settings.webSearchModel),
-      imageModel: ensureSelection('imageModel', settings.imageModel),
+      chatAgent: {
+        ...settings.chatAgent,
+        routingModel: ensureSelection('routingModel', settings.chatAgent.routingModel),
+        reasoningModel: ensureSelection('reasoningModel', settings.chatAgent.reasoningModel),
+        chatModel: ensureSelection('chatModel', settings.chatAgent.chatModel),
+        webSearchModel: ensureSelection('webSearchModel', settings.chatAgent.webSearchModel),
+        imageModel: ensureSelection('imageModel', settings.chatAgent.imageModel),
+      },
     };
 
     persistSettings(next);
@@ -236,7 +253,9 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
                 onOpenCreateDrawer={openCreateDrawer}
                 onOpenEditDrawer={openEditDrawer}
                 onDeleteModel={handleDeleteModel}
-                onContextLengthChange={(value) => handleSettingChange('chatContextLength', value)}
+                onContextLengthChange={(value) =>
+                  handleChatAgentSettingChange('chatContextLength', value)
+                }
               />
             )}
 

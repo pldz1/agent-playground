@@ -1,15 +1,19 @@
-import { resolveAuth } from '../config';
+import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
 import { reasoningPrompt } from '../prompts/reasoningPrompt';
 import { getOpenAIClient } from './openaiClient';
-import { AgentHistoryMessage, ToolRunResult } from '@/types';
+import { ChatAgentHistoryMessage, ChatAgentToolRunResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-export type ReasoningToolInput = { input: string; model?: string; history?: AgentHistoryMessage[] };
+export type ReasoningToolInput = {
+  input: string;
+  model?: string;
+  history?: ChatAgentHistoryMessage[];
+};
 
 export class ReasoningTool {
-  async think({ input, model }: ReasoningToolInput): Promise<ToolRunResult> {
+  async think({ input, model }: ReasoningToolInput): Promise<ChatAgentToolRunResult> {
     const auth = resolveAuth('reasoning');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;

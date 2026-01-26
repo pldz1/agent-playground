@@ -1,26 +1,15 @@
-import { ChatTool } from './tools/chatTool';
-import { WebSearchTool } from './tools/webSearchTool';
-import { ReasoningTool } from './tools/reasoningTool';
-import { ImageTool } from './tools/imageTool';
+import { ChatTool } from '../tools/chatTool';
+import { WebSearchTool } from '../tools/webSearchTool';
+import { ReasoningTool } from '../tools/reasoningTool';
+import { ImageTool } from '../tools/imageTool';
 import type {
-  AgentPlanProgressStep,
-  AgentProgressEvent,
-  AgentHistoryMessage,
-  ToolName,
-  ToolRunResult,
+  ChatAgentExecutorContext,
+  ChatAgentHistoryMessage,
+  ChatAgentImageInput,
+  ChatAgentIntentName,
+  ChatAgentPlanProgressStep,
+  ChatAgentProgressEvent,
 } from '@/types';
-
-export type IntentName = 'chat' | 'webSearch' | 'reasoning' | 'image_generate' | 'image_understand';
-
-export type ImageInput = { data?: string; url?: string; mimeType?: string };
-
-export type ToolRunOutput =
-  | { step: 'webSearch'; result: ToolRunResult }
-  | { step: 'reasoning'; result: ToolRunResult }
-  | { step: 'chat'; result: ToolRunResult }
-  | { step: 'image_generate'; result: ToolRunResult }
-  | { step: 'image_understand'; result: ToolRunResult }
-  | { step: string; error: string };
 
 export class Executor {
   tools: {
@@ -49,27 +38,22 @@ export class Executor {
     history,
   }: {
     input: string;
-    intents: IntentName[];
-    image?: ImageInput;
-    onProgress?: (event: AgentProgressEvent) => void;
-    history?: AgentHistoryMessage[];
-  }) {
-    const plan = this.#normalizePlan(intents, { hasImage: Boolean(image) });
-    const planSteps: AgentPlanProgressStep[] = plan.map((tool, index) => ({
+    intents: ChatAgentIntentName[];
+    image?: ChatAgentImageInput;
+    onProgress?: (event: ChatAgentProgressEvent) => void;
+    history?: ChatAgentHistoryMessage[];
+  }): Promise<ChatAgentExecutorContext> {
+    const plan = this.#normalizePlan(intents);
+    const planSteps: ChatAgentPlanProgressStep[] = plan.map((tool, index) => ({
       id: `step-${index}`,
-      tool: tool as ToolName,
+      tool,
     }));
 
     if (planSteps.length) {
       onProgress?.({ type: 'plan:ready', steps: planSteps });
     }
 
-    let context: {
-      input: string;
-      image?: ImageInput;
-      outputs: ToolRunOutput[];
-      plan: IntentName[];
-    } = {
+    let context: ChatAgentExecutorContext = {
       input,
       image,
       outputs: [],
@@ -161,8 +145,8 @@ export class Executor {
     return context;
   }
 
-  #normalizePlan(intents: IntentName[], { hasImage }: { hasImage: boolean }) {
-    const unique: IntentName[] = [];
+  #normalizePlan(intents: ChatAgentIntentName[]) {
+    const unique: ChatAgentIntentName[] = [];
     for (const intent of intents || []) {
       if (!unique.includes(intent)) unique.push(intent);
     }

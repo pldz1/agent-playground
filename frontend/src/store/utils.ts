@@ -1,4 +1,4 @@
-import { ModelConfig, ModelCapabilities, AppSettings } from '../types';
+import { ModelConfig, ModelCapabilities, AppSettings, ChatAgentSettings } from '../types';
 
 export const SESSIONS_KEY = 'ai_agent_sessions';
 export const SETTINGS_KEY = 'ai_agent_settings';
@@ -13,13 +13,15 @@ export const DEFAULT_CAPABILITIES: ModelCapabilities = {
 export const defaultSettings: AppSettings = {
   debugMode: false,
   exportFormat: 'json',
-  routingModel: '',
-  reasoningModel: '',
-  chatModel: '',
-  visionModel: '',
-  webSearchModel: '',
-  imageModel: '',
-  chatContextLength: 6,
+  chatAgent: {
+    routingModel: 'gpt-4.1-nano',
+    reasoningModel: 'gpt-5.1',
+    chatModel: 'gpt-4.1',
+    visionModel: 'gpt-4.1',
+    webSearchModel: 'gpt-4.1',
+    imageModel: 'gpt-image-1',
+    chatContextLength: 6,
+  },
   models: [],
 };
 
@@ -108,7 +110,13 @@ export const normalizeModels = (input: unknown, fallback: ModelConfig[]): ModelC
 export const normalizeSettings = (raw: unknown, base: AppSettings): AppSettings => {
   const source = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<AppSettings> & {
     availableModels?: unknown;
+    chatAgent?: unknown;
   };
+
+  const chatAgentSource =
+    typeof source.chatAgent === 'object' && source.chatAgent !== null
+      ? (source.chatAgent as Partial<ChatAgentSettings>)
+      : (source as Partial<ChatAgentSettings>);
 
   const models = normalizeModels(source.models ?? source.availableModels, base.models);
   const fallbackModelLabel = models[0]?.label ?? '';
@@ -134,13 +142,18 @@ export const normalizeSettings = (raw: unknown, base: AppSettings): AppSettings 
   return {
     debugMode: Boolean(source.debugMode ?? base.debugMode),
     exportFormat: source.exportFormat === 'markdown' ? 'markdown' : base.exportFormat,
-    routingModel: pickModel(source.routingModel, base.routingModel),
-    reasoningModel: pickModel(source.reasoningModel, base.reasoningModel),
-    chatModel: pickModel(source.chatModel, base.chatModel),
-    webSearchModel: pickModel(source.webSearchModel, base.webSearchModel),
-    imageModel: pickModel(source.imageModel, base.imageModel),
-    visionModel: pickModel(source.visionModel, base.visionModel),
-    chatContextLength: parseContextLength(source.chatContextLength, base.chatContextLength),
+    chatAgent: {
+      routingModel: pickModel(chatAgentSource.routingModel, base.chatAgent.routingModel),
+      reasoningModel: pickModel(chatAgentSource.reasoningModel, base.chatAgent.reasoningModel),
+      chatModel: pickModel(chatAgentSource.chatModel, base.chatAgent.chatModel),
+      webSearchModel: pickModel(chatAgentSource.webSearchModel, base.chatAgent.webSearchModel),
+      imageModel: pickModel(chatAgentSource.imageModel, base.chatAgent.imageModel),
+      visionModel: pickModel(chatAgentSource.visionModel, base.chatAgent.visionModel),
+      chatContextLength: parseContextLength(
+        chatAgentSource.chatContextLength,
+        base.chatAgent.chatContextLength,
+      ),
+    },
     models,
   };
 };

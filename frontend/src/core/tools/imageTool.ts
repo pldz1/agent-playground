@@ -1,4 +1,4 @@
-import { resolveAuth } from '../config';
+import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
 

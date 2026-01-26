@@ -1,12 +1,12 @@
 import { resolveAuth } from './config';
-import { logger } from './logger';
-import { routerPrompt } from './prompts/routerPrompt';
-import { getOpenAIClient } from './tools/openaiClient';
-import type { IntentName } from './executor';
+import { logger } from '../logger';
+import { routerPrompt } from '../prompts/routerPrompt';
+import { getOpenAIClient } from '../tools/openaiClient';
+import type { ChatAgentIntentName, ChatAgentRouteResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-function safeJsonParse(text: string) {
+function safeJsonParse(text: string): unknown | null {
   try {
     return JSON.parse(text);
   } catch {
@@ -14,8 +14,8 @@ function safeJsonParse(text: string) {
   }
 }
 
-function normalizeRoute(route: any): IntentName[] {
-  const allowed = new Set<IntentName>([
+function normalizeRoute(route: unknown): ChatAgentIntentName[] {
+  const allowed = new Set<ChatAgentIntentName>([
     'chat',
     'webSearch',
     'reasoning',
@@ -23,13 +23,18 @@ function normalizeRoute(route: any): IntentName[] {
     'image_understand',
   ]);
 
-  const intents = Array.isArray(route?.intents) && route.intents.length ? route.intents : [];
+  const intents =
+    typeof route === 'object' && route && 'intents' in route
+      ? (route as { intents?: unknown }).intents
+      : undefined;
 
-  const cleaned = intents
-    .map((x: any) => String(x || '').trim())
-    .filter((x: any) => allowed.has(x));
+  const rawIntents = Array.isArray(intents) && intents.length ? intents : [];
 
-  return cleaned.length ? (cleaned as IntentName[]) : ['chat'];
+  const cleaned = rawIntents
+    .map((value) => String(value || '').trim())
+    .filter((value): value is ChatAgentIntentName => allowed.has(value as ChatAgentIntentName));
+
+  return cleaned.length ? cleaned : ['chat'];
 }
 
 export async function route({
@@ -38,11 +43,7 @@ export async function route({
 }: {
   input: string;
   hasImage?: boolean;
-}): Promise<{
-  intents: IntentName[];
-  raw: any;
-  model: string;
-}> {
+}): Promise<ChatAgentRouteResult> {
   if (hasImage) {
     return {
       intents: ['image_understand'],
@@ -79,12 +80,13 @@ export async function route({
     });
 
     const text = completion.choices?.[0]?.message?.content ?? '{}';
-    const parsed = safeJsonParse(text) || {};
-    const intents = normalizeRoute(parsed);
+    const parsed = safeJsonParse(text);
+    const normalizedPayload = parsed ?? {};
+    const intents = normalizeRoute(normalizedPayload);
 
     return {
       intents,
-      raw: parsed,
+      raw: normalizedPayload,
       model: modelName,
     };
   } catch (error) {

@@ -43,19 +43,19 @@ function safeGetSettings(): AppSettings {
 function selectModelName(settings: AppSettings, role: ModelRole): string {
   switch (role) {
     case 'chat':
-      return settings.chatModel;
+      return settings.chatAgent.chatModel;
     case 'vision':
-      return settings.visionModel;
+      return settings.chatAgent.visionModel;
     case 'webSearch':
-      return settings.webSearchModel;
+      return settings.chatAgent.webSearchModel;
     case 'reasoning':
-      return settings.reasoningModel;
+      return settings.chatAgent.reasoningModel;
     case 'routing':
-      return settings.routingModel;
+      return settings.chatAgent.routingModel;
     case 'image':
-      return settings.imageModel;
+      return settings.chatAgent.imageModel;
     default:
-      return settings.chatModel;
+      return settings.chatAgent.chatModel;
   }
 }
 

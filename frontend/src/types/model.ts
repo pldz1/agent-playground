@@ -14,9 +14,7 @@ export interface ModelConfig {
   capabilities: ModelCapabilities;
 }
 
-export interface AppSettings {
-  debugMode: boolean;
-  exportFormat: 'json' | 'markdown';
+export interface ChatAgentSettings {
   routingModel: string;
   chatModel: string;
   webSearchModel: string;
@@ -24,6 +22,12 @@ export interface AppSettings {
   visionModel: string;
   imageModel: string;
   chatContextLength: number;
+}
+
+export interface AppSettings {
+  debugMode: boolean;
+  exportFormat: 'json' | 'markdown';
+  chatAgent: ChatAgentSettings;
   models: ModelConfig[];
 }
 
