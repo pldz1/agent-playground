@@ -46,3 +46,26 @@ export interface ModelConfigStatus {
   configured: boolean;
   issues: ModelConfigIssue[];
 }
+
+export interface RuntimeModel {
+  label: string;
+  name: string;
+  provider: string;
+  baseUrl: string;
+  apiKey: string;
+}
+
+export interface RuntimeAuthConfig {
+  role: ModelRole;
+  modelName: string;
+  model: RuntimeModel;
+  apiKey: string;
+  baseUrl: string;
+  apiVersion: string;
+}
+
+export interface ModelResolution {
+  modelName: string;
+  model: RuntimeModel;
+  settings: AppSettings;
+}

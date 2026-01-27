@@ -1,15 +1,16 @@
 import type {
-  ChatAgentExecutorContext,
   ChatAgentImageInput,
   ChatAgentInput,
   ChatAgentIntentName,
+  ChatAgentCoreHandleInput,
+  ChatAgentCoreHandleOutput,
   ChatAgentOutput,
   ChatAgentPlanStep,
-  ChatAgentProgressEvent,
-  ChatAgentRouteResult,
   ChatAgentToolName,
   ChatAgentToolOutput,
+  ChatAgentToolOutputInput,
   ChatAgentToolRunOutput,
+  InlineImageExtraction,
 } from '@/types';
 
 import { route } from './router';
@@ -31,16 +32,11 @@ function toPlan(plan: ChatAgentIntentName[] = []): ChatAgentPlanStep[] {
   }));
 }
 
-function toToolOutput({
-  output,
-  index,
-}: {
-  output: ChatAgentToolRunOutput;
-  index: number;
-}): ChatAgentToolOutput {
-  const base: Pick<ChatAgentToolOutput, 'stepId' | 'tool'> = {
+function toToolOutput({ output, index }: ChatAgentToolOutputInput): ChatAgentToolOutput {
+  const base: Pick<ChatAgentToolOutput, 'stepId' | 'tool' | 'duration'> = {
     stepId: `step-${index}`,
     tool: output.step as ChatAgentToolName,
+    duration: output.duration,
   };
 
   if ('error' in output) {
@@ -90,7 +86,7 @@ function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
 
 const INLINE_IMAGE_PATTERN = /!\[[^\]]*\]\((data:image\/[^)]+)\)/g;
 
-function extractInlineImages(text: string): { cleaned: string; images: string[] } {
+function extractInlineImages(text: string): InlineImageExtraction {
   if (!text) return { cleaned: '', images: [] };
   const images: string[] = [];
   const cleaned = text
@@ -135,6 +131,7 @@ function parseImageInput(image?: ChatAgentInput['image']): ChatAgentImageInput |
   return undefined;
 }
 
+// Orchestrates routing + execution and exposes low-level progress events.
 export class ChatAgentCore {
   executor: Executor;
 
@@ -142,17 +139,8 @@ export class ChatAgentCore {
     this.executor = executor || new Executor();
   }
 
-  async handle({
-    input,
-    image,
-    onProgress,
-    history,
-  }: {
-    input: string;
-    image?: ChatAgentImageInput;
-    onProgress?: (event: ChatAgentProgressEvent) => void;
-    history?: ChatAgentInput['history'];
-  }): Promise<ChatAgentExecutorContext & { routing: ChatAgentRouteResult }> {
+  // Runs routing first, then executes the plan with the executor.
+  async handle({ input, image, onProgress, history }: ChatAgentCoreHandleInput): Promise<ChatAgentCoreHandleOutput> {
     onProgress?.({ type: 'route:start' });
     const routing = await route({ input, hasImage: Boolean(image) });
     onProgress?.({
@@ -174,6 +162,7 @@ export class ChatAgentCore {
   }
 }
 
+// High-level facade that converts raw outputs into UI-friendly structures.
 export class ChatAgent {
   #core: ChatAgentCore;
 
@@ -181,6 +170,7 @@ export class ChatAgent {
     this.#core = coreAgent;
   }
 
+  // Parses image input, runs the core agent, and shapes the final response.
   async handle(input: ChatAgentInput): Promise<ChatAgentOutput> {
     const image = parseImageInput(input.image);
     const result = await this.#core.handle({
@@ -200,6 +190,7 @@ export class ChatAgent {
     return {
       routing: {
         intents: intents.map((name) => ({ name, confidence: 1 })),
+        duration: result.routing.duration,
       },
       plan: toPlan(plan),
       toolOutputs: outputs.map((output, index) => toToolOutput({ output, index })),

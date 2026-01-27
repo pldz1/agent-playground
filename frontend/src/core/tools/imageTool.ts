@@ -1,6 +1,7 @@
 import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
 import { getOpenAIClient } from './openaiClient';
+import type { ImageToolGenerateInput, ImageToolUnderstandInput } from '@/types';
 
 type ImageAuthHeaders = {
   url: string;
@@ -38,15 +39,8 @@ function buildImageEndpoint(
 }
 
 export class ImageTool {
-  async generate({
-    prompt,
-    size = '1024x1024',
-    model,
-  }: {
-    prompt: string;
-    size?: string;
-    model?: string;
-  }) {
+  // Creates an image using the configured image model provider.
+  async generate({ prompt, size = '1024x1024', model }: ImageToolGenerateInput) {
     const auth = resolveAuth('image');
     auth.apiVersion = auth.apiVersion || '2025-04-01-preview';
     const modelName = model ?? auth.modelName;
@@ -119,15 +113,8 @@ export class ImageTool {
     };
   }
 
-  async understand({
-    prompt,
-    image,
-    model,
-  }: {
-    prompt: string;
-    image?: { data?: string; url?: string; mimeType?: string };
-    model?: string;
-  }) {
+  // Performs multimodal understanding over a prompt + image input.
+  async understand({ prompt, image, model }: ImageToolUnderstandInput) {
     if (!image) {
       throw new Error('ImageTool.understand requires `image`.');
     }

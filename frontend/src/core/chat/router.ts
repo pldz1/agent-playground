@@ -2,7 +2,7 @@ import { resolveAuth } from './config';
 import { logger } from '../logger';
 import { routerPrompt } from '../prompts/routerPrompt';
 import { getOpenAIClient } from '../tools/openaiClient';
-import type { ChatAgentIntentName, ChatAgentRouteResult } from '@/types';
+import type { ChatAgentIntentName, ChatAgentRouteInput, ChatAgentRouteResult } from '@/types';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -37,18 +37,14 @@ function normalizeRoute(route: unknown): ChatAgentIntentName[] {
   return cleaned.length ? cleaned : ['chat'];
 }
 
-export async function route({
-  input,
-  hasImage = false,
-}: {
-  input: string;
-  hasImage?: boolean;
-}): Promise<ChatAgentRouteResult> {
+// Routes user input to one or more tool intents using the routing model.
+export async function route({ input, hasImage = false }: ChatAgentRouteInput): Promise<ChatAgentRouteResult> {
   if (hasImage) {
     return {
       intents: ['image_understand'],
       raw: { intents: 'image_understand' },
       model: 'heuristic',
+      duration: 0,
     };
   }
 
@@ -88,6 +84,7 @@ export async function route({
       intents,
       raw: normalizedPayload,
       model: modelName,
+      duration,
     };
   } catch (error) {
     logger.error('Router.route:error', {

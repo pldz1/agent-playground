@@ -16,6 +16,7 @@ export interface ChatAgentIntent {
 
 export interface ChatAgentRouting {
   intents: ChatAgentIntent[];
+  duration?: number;
 }
 
 export interface ChatAgentPlanStep {
@@ -31,8 +32,8 @@ export interface ChatAgentToolRunResult {
 }
 
 export type ChatAgentToolRunOutput =
-  | { step: ChatAgentIntentName; result: ChatAgentToolRunResult }
-  | { step: string; error: string };
+  | { step: ChatAgentIntentName; result: ChatAgentToolRunResult; duration?: number }
+  | { step: string; error: string; duration?: number };
 
 export interface ChatAgentToolOutput {
   stepId: string;
@@ -41,6 +42,11 @@ export interface ChatAgentToolOutput {
   duration?: number;
   data: ChatAgentToolRunOutput | null;
   error?: string;
+}
+
+export interface ChatAgentToolOutputInput {
+  output: ChatAgentToolRunOutput;
+  index: number;
 }
 
 export interface ChatAgentHistoryMessage {
@@ -90,10 +96,52 @@ export interface ChatAgentExecutorContext {
   plan: ChatAgentIntentName[];
 }
 
+export interface ChatAgentExecutorRunInput {
+  input: string;
+  intents: ChatAgentIntentName[];
+  image?: ChatAgentImageInput;
+  onProgress?: (event: ChatAgentProgressEvent) => void;
+  history?: ChatAgentHistoryMessage[];
+}
+
+export interface ChatAgentRouteInput {
+  input: string;
+  hasImage?: boolean;
+}
+
+export interface InlineImageExtraction {
+  cleaned: string;
+  images: string[];
+}
+
+export interface ImageToolGenerateInput {
+  prompt: string;
+  size?: string;
+  model?: string;
+}
+
+export interface ImageToolUnderstandInput {
+  prompt: string;
+  image?: ChatAgentImageInput;
+  model?: string;
+}
+
+export interface ChatAgentCoreHandleInput {
+  input: string;
+  image?: ChatAgentImageInput;
+  onProgress?: (event: ChatAgentProgressEvent) => void;
+  history?: ChatAgentInput['history'];
+}
+
+export interface ChatAgentCoreHandleOutput extends ChatAgentExecutorContext {
+  routing: ChatAgentRouteResult;
+}
+
 export interface ChatAgentRouteResult {
   intents: ChatAgentIntentName[];
   raw: unknown;
   model: string;
+  duration?: number;
 }
 
 export interface Message {

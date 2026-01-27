@@ -1,22 +1,5 @@
-import type { AppSettings, ModelConfig, ModelRole } from '@/types';
+import type { AppSettings, ModelConfig, ModelRole, ModelResolution, RuntimeAuthConfig, RuntimeModel } from '@/types';
 import { getSettings, defaultSettings } from '@/store';
-
-export interface RuntimeModel {
-  label: string;
-  name: string;
-  provider: string;
-  baseUrl: string;
-  apiKey: string;
-}
-
-export interface RuntimeAuthConfig {
-  role: ModelRole;
-  modelName: string;
-  model: RuntimeModel;
-  apiKey: string;
-  baseUrl: string;
-  apiVersion: string;
-}
 
 const EMPTY_MODEL: ModelConfig = {
   label: '',
@@ -79,11 +62,8 @@ function toRuntimeModel(model: ModelConfig): RuntimeModel {
   };
 }
 
-export function resolveModel(role: ModelRole): {
-  modelName: string;
-  model: RuntimeModel;
-  settings: AppSettings;
-} {
+// Resolves the model configuration for a given role, with fallbacks.
+export function resolveModel(role: ModelRole): ModelResolution {
   const settings = safeGetSettings();
   const selectedId = selectModelName(settings, role);
   const match = findModel(settings, selectedId);
@@ -95,6 +75,7 @@ export function resolveModel(role: ModelRole): {
   };
 }
 
+// Builds the auth payload for a given role, normalizing URL and key.
 export function resolveAuth(role: ModelRole): RuntimeAuthConfig {
   const { modelName, model } = resolveModel(role);
   const baseUrl = normalizeBaseUrl(model.baseUrl || '');
@@ -110,6 +91,7 @@ export function resolveAuth(role: ModelRole): RuntimeAuthConfig {
   };
 }
 
+// Throws when the selected model is missing required credentials.
 export function assertAuth(role: ModelRole): void {
   const auth = resolveAuth(role);
   const missing: string[] = [];

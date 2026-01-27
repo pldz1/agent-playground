@@ -4,11 +4,9 @@ import { ReasoningTool } from '../tools/reasoningTool';
 import { ImageTool } from '../tools/imageTool';
 import type {
   ChatAgentExecutorContext,
-  ChatAgentHistoryMessage,
-  ChatAgentImageInput,
+  ChatAgentExecutorRunInput,
   ChatAgentIntentName,
   ChatAgentPlanProgressStep,
-  ChatAgentProgressEvent,
 } from '@/types';
 
 export class Executor {
@@ -30,19 +28,8 @@ export class Executor {
       } satisfies Executor['tools']);
   }
 
-  async run({
-    input,
-    intents,
-    image,
-    onProgress,
-    history,
-  }: {
-    input: string;
-    intents: ChatAgentIntentName[];
-    image?: ChatAgentImageInput;
-    onProgress?: (event: ChatAgentProgressEvent) => void;
-    history?: ChatAgentHistoryMessage[];
-  }): Promise<ChatAgentExecutorContext> {
+  // Executes the resolved plan sequentially and emits progress events.
+  async run({ input, intents, image, onProgress, history }: ChatAgentExecutorRunInput): Promise<ChatAgentExecutorContext> {
     const plan = this.#normalizePlan(intents);
     const planSteps: ChatAgentPlanProgressStep[] = plan.map((tool, index) => ({
       id: `step-${index}`,
@@ -63,6 +50,7 @@ export class Executor {
     for (let index = 0; index < plan.length; index += 1) {
       const step = plan[index];
       const stepMeta = planSteps[index];
+      const startedAt = Date.now();
       if (stepMeta) {
         onProgress?.({ type: 'step:start', step: stepMeta });
       }
@@ -73,7 +61,7 @@ export class Executor {
             input,
             history,
           });
-          context.outputs.push({ step, result });
+          context.outputs.push({ step, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -82,7 +70,7 @@ export class Executor {
 
         if (step === 'webSearch') {
           const result = await this.tools.webSearch.search({ input });
-          context.outputs.push({ step, result });
+          context.outputs.push({ step, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -93,7 +81,7 @@ export class Executor {
           const result = await this.tools.reasoning.think({
             input,
           });
-          context.outputs.push({ step, result });
+          context.outputs.push({ step, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -102,7 +90,7 @@ export class Executor {
 
         if (step === 'image_generate') {
           const result = await this.tools.image.generate({ prompt: input });
-          context.outputs.push({ step, result });
+          context.outputs.push({ step, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -114,7 +102,7 @@ export class Executor {
             prompt: input,
             image,
           });
-          context.outputs.push({ step, result });
+          context.outputs.push({ step, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -122,7 +110,7 @@ export class Executor {
         }
 
         const unknownMessage = `Unknown step: ${step}`;
-        context.outputs.push({ step, error: unknownMessage });
+        context.outputs.push({ step, error: unknownMessage, duration: Date.now() - startedAt });
         if (stepMeta) {
           onProgress?.({
             type: 'step:error',
@@ -132,7 +120,7 @@ export class Executor {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        context.outputs.push({ step, error: message });
+        context.outputs.push({ step, error: message, duration: Date.now() - startedAt });
         if (stepMeta) {
           onProgress?.({ type: 'step:error', step: stepMeta, error: message });
         }

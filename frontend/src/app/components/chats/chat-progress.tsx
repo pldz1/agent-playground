@@ -7,6 +7,7 @@ export interface ChatProgressEntry {
   label: string;
   status: StepStatus;
   detail?: string;
+  duration?: number;
 }
 
 interface ChatProgressProps {
@@ -27,7 +28,15 @@ function getStatusIcon(status: StepStatus) {
   }
 }
 
+function formatDuration(duration?: number) {
+  if (duration === null || duration === undefined) return null;
+  if (duration < 1000) return `${duration}ms`;
+  const seconds = duration / 1000;
+  return `${seconds.toFixed(seconds < 10 ? 1 : 0)}s`;
+}
+
 export function ChatProgress({ entries }: ChatProgressProps) {
+  // Shows live progress for routing + tool execution.
   if (!entries.length) {
     return null;
   }
@@ -45,6 +54,11 @@ export function ChatProgress({ entries }: ChatProgressProps) {
               <p className="text-sm font-medium text-[#0F172A] dark:text-white">{entry.label}</p>
               {entry.detail && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">{entry.detail}</p>
+              )}
+              {entry.duration !== undefined && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Duration {formatDuration(entry.duration)}
+                </p>
               )}
             </div>
           </div>

@@ -36,7 +36,7 @@ export const exportSessionAsMarkdown = (session: Session): void => {
         markdown += `\n**Outputs:**\n`;
         for (const output of message.toolOutputs) {
           markdown += `- ${output.tool}: ${output.status}`;
-          if (output.duration) {
+          if (output.duration !== undefined) {
             markdown += ` (${output.duration}ms)`;
           }
           markdown += `\n`;

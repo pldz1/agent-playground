@@ -112,6 +112,7 @@ export function ChatsPage({
   const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
   const chatContextLength = useAppStore((state) => state.settings.chatAgent.chatContextLength);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const progressStartTimesRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     const loaded = getSessions().sort((a, b) => b.updatedAt - a.updatedAt);
@@ -210,11 +211,22 @@ export function ChatsPage({
 
   const handleAgentProgress = useCallback((event: ChatAgentProgressEvent) => {
     setProgressEntries((prev) => {
+      const timestamp = Date.now();
+      const progressStartTimes = progressStartTimesRef.current;
+      const withDuration = (entry: ChatProgressEntry) => ({
+        ...entry,
+        duration:
+          progressStartTimes.has(entry.id) && entry.duration === undefined
+            ? timestamp - (progressStartTimes.get(entry.id) ?? timestamp)
+            : entry.duration,
+      });
       const ensureRouteEntry = (status: ChatProgressEntry['status'], detail: string) => {
-        const hasRouteEntry = prev.some((entry) => entry.id === ROUTE_ENTRY_ID);
-        if (hasRouteEntry) {
+        const existing = prev.find((entry) => entry.id === ROUTE_ENTRY_ID);
+        if (existing) {
           return prev.map((entry) =>
-            entry.id === ROUTE_ENTRY_ID ? { ...entry, status, detail } : entry,
+            entry.id === ROUTE_ENTRY_ID
+              ? withDuration({ ...entry, status, detail })
+              : entry,
           );
         }
         return [
@@ -223,6 +235,7 @@ export function ChatsPage({
             label: ROUTE_LABEL,
             status,
             detail,
+            duration: status === 'success' ? 0 : undefined,
           },
           ...prev,
         ];
@@ -230,6 +243,7 @@ export function ChatsPage({
 
       switch (event.type) {
         case 'route:start':
+          progressStartTimes.set(ROUTE_ENTRY_ID, timestamp);
           return [
             {
               id: ROUTE_ENTRY_ID,
@@ -258,36 +272,39 @@ export function ChatsPage({
           return [...prev, ...pendingSteps];
         }
         case 'step:start':
+          progressStartTimes.set(event.step.id, timestamp);
           return prev.map((entry) =>
             entry.id === event.step.id
               ? {
                   ...entry,
                   status: 'running',
                   detail: `${describeTool(event.step.tool)} ...`,
+                  duration: undefined,
                 }
               : entry,
           );
         case 'step:complete':
           return prev.map((entry) =>
             entry.id === event.step.id
-              ? {
+              ? withDuration({
                   ...entry,
                   status: 'success',
                   detail: `${describeTool(event.step.tool)} completed.`,
-                }
+                })
               : entry,
           );
         case 'step:error':
           return prev.map((entry) =>
             entry.id === event.step.id
-              ? {
+              ? withDuration({
                   ...entry,
                   status: 'fail',
                   detail: event.error,
-                }
+                })
               : entry,
           );
         case 'complete':
+          progressStartTimes.clear();
         default:
           return prev;
       }
@@ -414,6 +431,7 @@ export function ChatsPage({
       } finally {
         setIsProcessing(false);
         setProgressEntries([]);
+        progressStartTimesRef.current.clear();
       }
     },
     [
