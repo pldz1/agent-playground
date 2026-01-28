@@ -64,7 +64,6 @@ Never run full test suites unless explicitly requested.
   - clear reasoning
 - When code is changed:
   - list changed files
-  - provide **unified diff / patch-style output**
 
 For discussion, analysis, or design questions:
 

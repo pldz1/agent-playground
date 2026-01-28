@@ -41,6 +41,11 @@ export function Composer({
   const canSelectTool = toolOptions.length > 1;
 
   const handleSend = () => {
+    if (disabled) {
+      toast.error('Assistant is working. Please wait before sending.');
+      return;
+    }
+
     if (!text.trim() && !image) {
       toast.error('Please enter a message or upload an image');
       return;
@@ -170,7 +175,6 @@ export function Composer({
           onPaste={handlePaste}
           placeholder={placeholder ?? 'Enter your message...'}
           className="min-h-[32px] max-h-[160px] border-none bg-transparent px-0 py-0 text-base shadow-none focus-visible:border-none focus-visible:ring-0 disabled:bg-transparent"
-          disabled={disabled}
         />
 
         <div className="flex items-center justify-between">
@@ -241,7 +245,7 @@ export function Composer({
 
           <Button
             onClick={handleSend}
-            disabled={disabled || (!text.trim() && !image)}
+            disabled={!text.trim() && !image}
             size="icon"
             className="rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200 disabled:bg-slate-100 disabled:text-slate-400 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >

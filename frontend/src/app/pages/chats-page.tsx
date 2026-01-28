@@ -63,7 +63,7 @@ const fileToDataUrl = (file: File): Promise<string> =>
 
 const TOOL_LABELS: Record<ChatAgentToolName, string> = {
   chat: 'Chat',
-  webSearch: 'WebSearch',
+  webSearch: 'WEB Search',
   reasoning: 'Reasoning',
   image_generate: 'Generating image',
   image_understand: 'Understand image',
@@ -89,8 +89,9 @@ export function ChatsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
-  const [selectedTool, setSelectedTool] = useState<ComposerToolId>('auto');
   const settings = useAppStore((state) => state.settings);
+  const defaultTool = settings.chatAgent.defaultTool ?? 'chat';
+  const [selectedTool, setSelectedTool] = useState<ComposerToolId>(defaultTool);
   const isMobile = useIsMobile();
   const chatContextLength = useAppStore((state) => state.settings.chatAgent.chatContextLength);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
@@ -188,9 +189,12 @@ export function ChatsPage({
 
   useEffect(() => {
     if (!toolOptions.some((option) => option.id === selectedTool)) {
-      setSelectedTool('auto');
+      const fallbackTool = toolOptions.some((option) => option.id === defaultTool)
+        ? defaultTool
+        : 'auto';
+      setSelectedTool(fallbackTool);
     }
-  }, [toolOptions, selectedTool]);
+  }, [defaultTool, toolOptions, selectedTool]);
 
   const filteredSessions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -370,6 +374,7 @@ export function ChatsPage({
           );
         case 'complete':
           progressStartTimes.clear();
+          return prev;
         default:
           return prev;
       }

@@ -14,6 +14,7 @@ export const defaultSettings: AppSettings = {
   debugMode: false,
   exportFormat: 'json',
   chatAgent: {
+    defaultTool: 'chat',
     routingModel: 'gpt-4.1-nano',
     reasoningModel: 'gpt-5.1',
     chatModel: 'gpt-4.1',
@@ -139,10 +140,29 @@ export const normalizeSettings = (raw: unknown, base: AppSettings): AppSettings 
     return Math.min(parsed, 50);
   };
 
+  const parseDefaultTool = (
+    value: unknown,
+    fallback: AppSettings['chatAgent']['defaultTool'],
+  ): AppSettings['chatAgent']['defaultTool'] => {
+    const candidate = typeof value === 'string' ? value : '';
+    const allowedTools: AppSettings['chatAgent']['defaultTool'][] = [
+      'auto',
+      'chat',
+      'reasoning',
+      'webSearch',
+      'image_generate',
+      'image_understand',
+    ];
+    return allowedTools.includes(candidate as AppSettings['chatAgent']['defaultTool'])
+      ? (candidate as AppSettings['chatAgent']['defaultTool'])
+      : fallback;
+  };
+
   return {
     debugMode: Boolean(source.debugMode ?? base.debugMode),
     exportFormat: source.exportFormat === 'markdown' ? 'markdown' : base.exportFormat,
     chatAgent: {
+      defaultTool: parseDefaultTool(chatAgentSource.defaultTool, base.chatAgent.defaultTool),
       routingModel: pickModel(chatAgentSource.routingModel, base.chatAgent.routingModel),
       reasoningModel: pickModel(chatAgentSource.reasoningModel, base.chatAgent.reasoningModel),
       chatModel: pickModel(chatAgentSource.chatModel, base.chatAgent.chatModel),
