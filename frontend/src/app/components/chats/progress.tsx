@@ -1,11 +1,11 @@
-import type { StepStatus } from '@/types';
+import type { ChatAgentStepStatus } from '@/types';
 import { Card } from '../ui/card';
 import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
 
 export interface ChatProgressEntry {
   id: string;
   label: string;
-  status: StepStatus;
+  status: ChatAgentStepStatus;
   detail?: string;
   duration?: number;
 }
@@ -14,7 +14,7 @@ interface ChatProgressProps {
   entries: ChatProgressEntry[];
 }
 
-function getStatusIcon(status: StepStatus) {
+function getStatusIcon(status: ChatAgentStepStatus) {
   switch (status) {
     case 'success':
       return <CheckCircle2 className="size-4 text-green-500" />;

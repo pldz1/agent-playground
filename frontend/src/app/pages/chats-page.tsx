@@ -10,37 +10,14 @@ import type {
   ModelConfigIssue,
   Session,
 } from '@/types';
-import { MessageCard } from '../components/message-card';
-import { Composer, type ComposerToolId, type ComposerToolOption } from '../components/composer';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { type ComposerToolId, type ComposerToolOption } from '../components/chats/composer';
+import { ChatSidebarPanel } from '../components/chats/sidebar-panel';
+import { ChatSessionView } from '../components/chats/session-view';
+import { ChatEmptyState } from '../components/chats/empty-state';
+import { ChatSessionDialogs } from '../components/chats/session-dialogs';
 import { useIsMobile } from '../components/ui/use-mobile';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../components/ui/alert-dialog';
-import { PanelLeftOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { ChatSidebar } from '../components/chats/chat-sidebar';
-import { ConfigStatusBanner } from '../components/chats/config-status-banner';
-import { EmptyMessagesPlaceholder } from '../components/chats/empty-messages-placeholder';
-import { ChatWelcomePanel } from '../components/chats/chat-welcome-panel';
-import { ChatProgress, type ChatProgressEntry } from '../components/chats/chat-progress';
+import type { ChatProgressEntry } from '../components/chats/progress';
 
 interface ChatsPageProps {
   debugMode: boolean;
@@ -622,171 +599,64 @@ export function ChatsPage({
 
   return (
     <div className="h-full min-h-0 w-full flex bg-slate-50 dark:bg-slate-950 relative">
-      {!isMobile && isSidebarVisible && (
-        <ChatSidebar
-          sessions={sessions}
-          filteredSessions={filteredSessions}
-          currentSessionId={currentSessionId}
-          searchQuery={searchQuery}
-          onSearchChange={(value) => setSearchQuery(value)}
-          onCreateSession={handleCreateSession}
-          onToggleSidebar={toggleSidebar}
-          onSelectSession={handleSelectSession}
-          onExportJSON={handleExportJSON}
-          onExportMarkdown={handleExportMarkdown}
-          onRenameSession={startRenameSession}
-          onDeleteSession={(session) => setSessionToDelete(session)}
-          newSessionDisabled={newSessionDisabled}
-        />
-      )}
-      {isMobile && isSidebarVisible && (
-        <div
-          className="absolute inset-0 z-20 bg-black/20 animate-in fade-in-0"
-          onClick={toggleSidebar}
-          role="presentation"
-        >
-          <div
-            className="absolute inset-y-0 left-0 w-full max-w-sm animate-in slide-in-from-left duration-200"
-            onClick={(event) => event.stopPropagation()}
-            role="presentation"
-          >
-            <ChatSidebar
-              sessions={sessions}
-              filteredSessions={filteredSessions}
-              currentSessionId={currentSessionId}
-              searchQuery={searchQuery}
-              onSearchChange={(value) => setSearchQuery(value)}
-              onCreateSession={handleCreateSession}
-              onToggleSidebar={toggleSidebar}
-              onSelectSession={handleSelectSession}
-              onExportJSON={handleExportJSON}
-              onExportMarkdown={handleExportMarkdown}
-              onRenameSession={startRenameSession}
-              onDeleteSession={(session) => setSessionToDelete(session)}
-              newSessionDisabled={newSessionDisabled}
-            />
-          </div>
-        </div>
-      )}
-      {!isSidebarVisible && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute top-4 left-4 bg-white dark:bg-slate-900 z-50"
-          onClick={toggleSidebar}
-          aria-label="Show chat list"
-        >
-          <PanelLeftOpen className="size-4" />
-        </Button>
-      )}
+      <ChatSidebarPanel
+        isMobile={isMobile}
+        isSidebarVisible={isSidebarVisible}
+        sessions={sessions}
+        filteredSessions={filteredSessions}
+        currentSessionId={currentSessionId}
+        searchQuery={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        onCreateSession={handleCreateSession}
+        onToggleSidebar={toggleSidebar}
+        onSelectSession={handleSelectSession}
+        onExportJSON={handleExportJSON}
+        onExportMarkdown={handleExportMarkdown}
+        onRenameSession={startRenameSession}
+        onDeleteSession={(session) => setSessionToDelete(session)}
+        newSessionDisabled={newSessionDisabled}
+      />
 
       <div className="flex-1 flex flex-col z-10">
         {currentSession ? (
-          <>
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-6">
-                  {showConfigBanner && (
-                    <ConfigStatusBanner
-                      showDebug={showDebugDetails}
-                      debugLines={debugLines}
-                      onNavigate={onNavigateToModels}
-                    />
-                  )}
-                  {currentSession.messages.length ? (
-                    currentSession.messages.map((message) => (
-                      <MessageCard key={message.id} message={message} debugMode={debugMode} />
-                    ))
-                  ) : (
-                    <EmptyMessagesPlaceholder />
-                  )}
-                  {isProcessing && progressEntries.length > 0 && (
-                    <ChatProgress entries={progressEntries} />
-                  )}
-                </div>
-                <div ref={messageEndRef} className="h-0" />
-              </ScrollArea>
-            </div>
-
-            <div className="px-4 sm:px-6 lg:px-0">
-              <Composer
-                onSend={handleSendMessage}
-                disabled={isComposerDisabled}
-                placeholder={composerPlaceholder}
-                toolOptions={toolOptions}
-                selectedTool={selectedTool}
-                onToolSelect={setSelectedTool}
-              />
-            </div>
-          </>
+          <ChatSessionView
+            currentSession={currentSession}
+            debugMode={debugMode}
+            showConfigBanner={showConfigBanner}
+            showDebugDetails={showDebugDetails}
+            debugLines={debugLines}
+            onNavigateToModels={onNavigateToModels}
+            isProcessing={isProcessing}
+            progressEntries={progressEntries}
+            messageEndRef={messageEndRef}
+            onSendMessage={handleSendMessage}
+            isComposerDisabled={isComposerDisabled}
+            composerPlaceholder={composerPlaceholder}
+            toolOptions={toolOptions}
+            selectedTool={selectedTool}
+            onToolSelect={setSelectedTool}
+          />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 sm:gap-6 sm:px-6">
-            {showConfigBanner && (
-              <div className="w-full max-w-xl">
-                <ConfigStatusBanner
-                  showDebug={showDebugDetails}
-                  debugLines={debugLines}
-                  onNavigate={onNavigateToModels}
-                />
-              </div>
-            )}
-            <ChatWelcomePanel onCreateSession={handleCreateSession} disabled={newSessionDisabled} />
-          </div>
+          <ChatEmptyState
+            showConfigBanner={showConfigBanner}
+            showDebugDetails={showDebugDetails}
+            debugLines={debugLines}
+            onNavigateToModels={onNavigateToModels}
+            onCreateSession={handleCreateSession}
+            disabled={newSessionDisabled}
+          />
         )}
       </div>
-
-      <AlertDialog
-        open={sessionToDelete !== null}
-        onOpenChange={(open) => !open && setSessionToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Current Chat</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will permanently delete the current chat and all messages, and cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteCurrentSession}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Dialog
-        open={sessionToRename !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeRenameDialog();
-          }
-        }}
-      >
-        <DialogContent>
-          <form onSubmit={handleRenameSession} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Rename Chat</DialogTitle>
-              <DialogDescription>Give the chat a more recognizable name.</DialogDescription>
-            </DialogHeader>
-            <Input
-              value={renameValue}
-              onChange={(event) => setRenameValue(event.target.value)}
-              placeholder="Enter new chat name"
-              autoFocus
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeRenameDialog}>
-                Cancel
-              </Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ChatSessionDialogs
+        sessionToDelete={sessionToDelete}
+        sessionToRename={sessionToRename}
+        renameValue={renameValue}
+        onRenameValueChange={setRenameValue}
+        onCloseRenameDialog={closeRenameDialog}
+        onConfirmDelete={handleDeleteCurrentSession}
+        onDismissDelete={() => setSessionToDelete(null)}
+        onSubmitRename={handleRenameSession}
+      />
     </div>
   );
 }

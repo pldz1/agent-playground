@@ -1,10 +1,10 @@
 import type { Message } from '@/types';
-import { Card } from './ui/card';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Card } from '../ui/card';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import { MdPreview } from 'md-editor-rt';
-import { AgentExecutionCard } from './chats/agent-execution-card';
+import { AgentExecutionCard } from './agent-execution';
 
-import appIcon from '../../assets/app.svg';
+import appIcon from '../../../assets/app.svg';
 import 'md-editor-rt/lib/style.css';
 
 interface MessageCardProps {

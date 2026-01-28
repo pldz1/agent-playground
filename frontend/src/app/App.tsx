@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sidebar } from './components/sidebar';
+import { Sidebar } from './components/common/sidebar';
 import { ChatsPage } from './pages/chats-page';
 import { SettingsPage } from './pages/settings-page';
 import { Toaster } from './components/ui/sonner';

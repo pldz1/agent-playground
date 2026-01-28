@@ -28,10 +28,10 @@ import {
   getEligibleModelsForSetting,
 } from '../components/settings/utils';
 
-import { SettingsSidebar } from '../components/settings/settings-sidebar';
-import { GeneralSettingsSection } from '../components/settings/general-settings-section';
-import { ChatAgentSection } from '../components/settings/chat-agent-section';
-import { DataManagementSection } from '../components/settings/data-management-section';
+import { SettingsSidebar } from '../components/settings/sidebar';
+import { GeneralSettingsSection } from '../components/settings/general-settings';
+import { ChatAgentSection } from '../components/settings/chat-agent';
+import { DataManagementSection } from '../components/settings/data-management';
 import { ModelDrawer } from '../components/settings/model-drawer';
 
 interface SettingsPageProps {

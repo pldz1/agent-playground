@@ -1,9 +1,9 @@
 import { useState, useRef, KeyboardEvent } from 'react';
 import type { ChatAgentIntentName } from '@/types';
-import { Button } from './ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Textarea } from './ui/textarea';
-import { cn } from './ui/utils';
+import { Button } from '../ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Textarea } from '../ui/textarea';
+import { cn } from '../ui/utils';
 import { Check, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
 import { toast } from 'sonner';
 

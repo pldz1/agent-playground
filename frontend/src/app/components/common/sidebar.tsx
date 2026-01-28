@@ -1,7 +1,7 @@
-import { cn } from './ui/utils';
-import { navItems } from '../helpers/navigation';
-import { Button } from './ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { cn } from '../ui/utils';
+import { navItems } from '../../helpers/navigation';
+import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface SidebarProps {
   currentPath: string;
