@@ -34,6 +34,7 @@ local_dist = current_dir / "dist"
 # -----------------------------
 DESKTOP_APP_HOST = os.getenv("DESKTOP_APP_HOST", "127.0.0.1")
 DESKTOP_APP_PORT = int(os.getenv("DESKTOP_APP_PORT", "10088"))
+WEBVIEW_HOST = ("127.0.0.1" if DESKTOP_APP_HOST in ("0.0.0.0", "::") else DESKTOP_APP_HOST)
 
 # -----------------------------
 # FastAPI 应用
@@ -108,7 +109,7 @@ def start_webview():
     api = API()
     window = webview.create_window(
         title="Agent Playground",
-        url=f"http://{DESKTOP_APP_HOST}:{DESKTOP_APP_PORT}",
+        url=f"http://{WEBVIEW_HOST}:{DESKTOP_APP_PORT}",
         js_api=api,
         width=1200,
         height=800,

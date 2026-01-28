@@ -77,6 +77,7 @@ export interface ChatAgentImageInput {
 export interface ChatAgentInput {
   text: string;
   image?: File | string;
+  intents?: ChatAgentIntentName[];
   onProgress?: (event: ChatAgentProgressEvent) => void;
   history?: ChatAgentHistoryMessage[];
 }
@@ -129,6 +130,7 @@ export interface ImageToolUnderstandInput {
 export interface ChatAgentCoreHandleInput {
   input: string;
   image?: ChatAgentImageInput;
+  intents?: ChatAgentIntentName[];
   onProgress?: (event: ChatAgentProgressEvent) => void;
   history?: ChatAgentInput['history'];
 }

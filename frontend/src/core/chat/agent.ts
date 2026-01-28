@@ -32,6 +32,15 @@ function toPlan(plan: ChatAgentIntentName[] = []): ChatAgentPlanStep[] {
   }));
 }
 
+function normalizeIntents(intents: ChatAgentIntentName[] = []): ChatAgentIntentName[] {
+  const unique: ChatAgentIntentName[] = [];
+  for (const intent of intents) {
+    if (!unique.includes(intent)) unique.push(intent);
+  }
+  if (!unique.length) unique.push('chat');
+  return unique;
+}
+
 function toToolOutput({ output, index }: ChatAgentToolOutputInput): ChatAgentToolOutput {
   const base: Pick<ChatAgentToolOutput, 'stepId' | 'tool' | 'duration'> = {
     stepId: `step-${index}`,
@@ -140,23 +149,51 @@ export class ChatAgentCore {
   }
 
   // Runs routing first, then executes the plan with the executor.
-  async handle({ input, image, onProgress, history }: ChatAgentCoreHandleInput): Promise<ChatAgentCoreHandleOutput> {
-    onProgress?.({ type: 'route:start' });
-    const routing = await route({ input, hasImage: Boolean(image) });
-    onProgress?.({
-      type: 'route:complete',
-      intents: routing.intents,
-    });
+  async handle({
+    input,
+    image,
+    intents,
+    onProgress,
+    history,
+  }: ChatAgentCoreHandleInput): Promise<ChatAgentCoreHandleOutput> {
+    const hasExplicitIntents = Array.isArray(intents) && intents.length > 0;
+    const normalizedIntents = hasExplicitIntents ? normalizeIntents(intents) : [];
+    if (!hasExplicitIntents) {
+      onProgress?.({ type: 'route:start' });
+      const routing = await route({ input, hasImage: Boolean(image) });
+      onProgress?.({
+        type: 'route:complete',
+        intents: routing.intents,
+      });
+      const result = await this.executor.run({
+        input,
+        intents: routing.intents,
+        image,
+        onProgress,
+        history,
+      });
+
+      return {
+        routing,
+        ...result,
+      };
+    }
+
     const result = await this.executor.run({
       input,
-      intents: routing.intents,
+      intents: normalizedIntents,
       image,
       onProgress,
       history,
     });
 
     return {
-      routing,
+      routing: {
+        intents: normalizedIntents,
+        raw: { intents: normalizedIntents, mode: 'manual' },
+        model: 'manual',
+        duration: 0,
+      },
       ...result,
     };
   }
@@ -176,6 +213,7 @@ export class ChatAgent {
     const result = await this.#core.handle({
       input: input.text,
       image,
+      intents: input.intents,
       onProgress: input.onProgress,
       history: input.history,
     });

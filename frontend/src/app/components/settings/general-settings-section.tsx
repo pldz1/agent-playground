@@ -1,5 +1,7 @@
 import type { AppSettings } from '@/types';
 import { Card } from '../../components/ui/card';
+import { Label } from '../../components/ui/label';
+import { Separator } from '../../components/ui/separator';
 import { Switch } from '../../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
 import { Bug, Moon, Sun } from 'lucide-react';
@@ -19,21 +21,23 @@ export function GeneralSettingsSection({
 }: GeneralSettingsSectionProps) {
   return (
     <Card className="p-6">
-      <div className="flex flex-col gap-6">
-        <div>
+      <div className="space-y-4">
+        <div className="space-y-1">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">General Settings</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Manage debugging mode and interface themes.
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 px-4 py-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <Bug className="mt-0.5 size-5 text-[#4F46E5]" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">Debugging mode</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Debugging mode
+                </Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Displays detailed reasoning and tool calls of the agent, helping with
                   troubleshooting.
                 </p>
@@ -45,12 +49,16 @@ export function GeneralSettingsSection({
             />
           </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 px-4 py-4 dark:border-gray-800 md:flex-row md:items-center md:justify-between">
+          <Separator />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <Sun className="mt-0.5 size-5 text-[#FB923C]" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">Interface Theme</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Interface Theme
+                </Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Switch between light and dark modes.
                 </p>
               </div>
@@ -59,7 +67,7 @@ export function GeneralSettingsSection({
               type="single"
               value={theme}
               onValueChange={(value) => value && onThemeChange(value as 'light' | 'dark')}
-              className="mt-1 md:mt-0"
+              className="mt-1 sm:mt-0"
             >
               <ToggleGroupItem
                 value="light"

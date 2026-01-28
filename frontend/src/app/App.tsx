@@ -67,7 +67,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex bg-gray-50 dark:bg-gray-950">
+    <div className="h-screen w-full overflow-hidden flex bg-gray-50 dark:bg-gray-950">
       <Sidebar
         currentPath={getCurrentPath()}
         onNavigate={handleNavigate}
@@ -75,7 +75,7 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-hidden">{renderPage()}</div>
+        <div className="flex-1 min-h-0 overflow-hidden">{renderPage()}</div>
       </div>
 
       <Toaster />

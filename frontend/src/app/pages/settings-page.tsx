@@ -194,14 +194,18 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
   const activeSectionMeta = SETTINGS_SECTIONS.find((section) => section.id === activeSection);
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <SettingsSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+    <div className="flex h-full min-h-0 w-full flex-col lg:flex-row overflow-hidden">
+      <div className="hidden lg:block">
+        <SettingsSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      </div>
 
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <div className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 p-4 sm:p-6">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">Settings</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                Settings
+              </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Tune agent behaviour, route tasks to the right models, and manage provider
                 credentials.

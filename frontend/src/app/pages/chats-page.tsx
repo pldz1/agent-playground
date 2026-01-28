@@ -5,15 +5,17 @@ import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export'
 import type {
   ChatAgentProgressEvent,
   ChatAgentToolName,
+  ModelRole,
   Message,
   ModelConfigIssue,
   Session,
 } from '@/types';
 import { MessageCard } from '../components/message-card';
-import { Composer } from '../components/composer';
+import { Composer, type ComposerToolId, type ComposerToolOption } from '../components/composer';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { useIsMobile } from '../components/ui/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -110,6 +112,9 @@ export function ChatsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
+  const [selectedTool, setSelectedTool] = useState<ComposerToolId>('auto');
+  const settings = useAppStore((state) => state.settings);
+  const isMobile = useIsMobile();
   const chatContextLength = useAppStore((state) => state.settings.chatAgent.chatContextLength);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const progressStartTimesRef = useRef<Map<string, number>>(new Map());
@@ -122,10 +127,93 @@ export function ChatsPage({
     }
   }, []);
 
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarVisible(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) return undefined;
+    document.body.style.overflow = isSidebarVisible ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobile, isSidebarVisible]);
+
   const currentSession = useMemo(
     () => sessions.find((session) => session.id === currentSessionId) ?? null,
     [currentSessionId, sessions],
   );
+
+  const toolOptions = useMemo<ComposerToolOption[]>(() => {
+    const unavailableRoles = new Set<ModelRole>(configIssues.map((issue) => issue.role));
+    const isAvailable = (role: ModelRole, modelId: string) =>
+      Boolean(modelId) && !unavailableRoles.has(role);
+
+    const options: ComposerToolOption[] = [
+      {
+        id: 'auto',
+        label: 'Auto Route',
+        description: 'Let the router infer the intent.',
+      },
+    ];
+
+    if (isAvailable('chat', settings.chatAgent.chatModel)) {
+      options.push({
+        id: 'chat',
+        label: 'Chat',
+        description: 'Direct chat response.',
+      });
+    }
+
+    if (isAvailable('reasoning', settings.chatAgent.reasoningModel)) {
+      options.push({
+        id: 'reasoning',
+        label: 'Reasoning',
+        description: 'Deep reasoning analysis.',
+      });
+    }
+
+    if (isAvailable('webSearch', settings.chatAgent.webSearchModel)) {
+      options.push({
+        id: 'webSearch',
+        label: 'Web Search',
+        description: 'Search the web before responding.',
+      });
+    }
+
+    if (isAvailable('image', settings.chatAgent.imageModel)) {
+      options.push({
+        id: 'image_generate',
+        label: 'Image Generate',
+        description: 'Generate an image from text.',
+      });
+    }
+
+    if (isAvailable('vision', settings.chatAgent.visionModel)) {
+      options.push({
+        id: 'image_understand',
+        label: 'Image Understand',
+        description: 'Analyze a provided image.',
+      });
+    }
+
+    return options;
+  }, [
+    configIssues,
+    settings.chatAgent.chatModel,
+    settings.chatAgent.imageModel,
+    settings.chatAgent.reasoningModel,
+    settings.chatAgent.visionModel,
+    settings.chatAgent.webSearchModel,
+  ]);
+
+  useEffect(() => {
+    if (!toolOptions.some((option) => option.id === selectedTool)) {
+      setSelectedTool('auto');
+    }
+  }, [toolOptions, selectedTool]);
 
   const filteredSessions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -360,6 +448,8 @@ export function ChatsPage({
 
       upsertSession(sessionAfterUser);
       setIsProcessing(true);
+      setProgressEntries([]);
+      progressStartTimesRef.current.clear();
 
       const historyLimit = Math.max(0, chatContextLength);
       const precedingMessages =
@@ -392,11 +482,13 @@ export function ChatsPage({
       const historyInput = history.length > 0 ? history : undefined;
 
       try {
+        const intents = selectedTool !== 'auto' ? [selectedTool] : undefined;
         const result = await chatAgent.handle({
           text,
           image: imageData,
           history: historyInput,
           onProgress: handleAgentProgress,
+          intents,
         });
 
         const assistantMessage: Message = {
@@ -440,6 +532,7 @@ export function ChatsPage({
       ensureSession,
       handleAgentProgress,
       isModelConfigured,
+      selectedTool,
       upsertSession,
     ],
   );
@@ -457,9 +550,15 @@ export function ChatsPage({
     toast.success('Chat deleted');
   }, [sessionToDelete, sessions]);
 
-  const handleSelectSession = useCallback((sessionId: string) => {
-    setCurrentSessionId(sessionId);
-  }, []);
+  const handleSelectSession = useCallback(
+    (sessionId: string) => {
+      setCurrentSessionId(sessionId);
+      if (isMobile) {
+        setIsSidebarVisible(false);
+      }
+    },
+    [isMobile],
+  );
 
   const handleExportJSON = useCallback((session: Session) => {
     exportSessionAsJSON(session);
@@ -522,8 +621,8 @@ export function ChatsPage({
   }, []);
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-slate-950 relative">
-      {isSidebarVisible && (
+    <div className="h-full min-h-0 w-full flex bg-slate-50 dark:bg-slate-950 relative">
+      {!isMobile && isSidebarVisible && (
         <ChatSidebar
           sessions={sessions}
           filteredSessions={filteredSessions}
@@ -540,11 +639,40 @@ export function ChatsPage({
           newSessionDisabled={newSessionDisabled}
         />
       )}
+      {isMobile && isSidebarVisible && (
+        <div
+          className="absolute inset-0 z-20 bg-black/20 animate-in fade-in-0"
+          onClick={toggleSidebar}
+          role="presentation"
+        >
+          <div
+            className="absolute inset-y-0 left-0 w-full max-w-sm animate-in slide-in-from-left duration-200"
+            onClick={(event) => event.stopPropagation()}
+            role="presentation"
+          >
+            <ChatSidebar
+              sessions={sessions}
+              filteredSessions={filteredSessions}
+              currentSessionId={currentSessionId}
+              searchQuery={searchQuery}
+              onSearchChange={(value) => setSearchQuery(value)}
+              onCreateSession={handleCreateSession}
+              onToggleSidebar={toggleSidebar}
+              onSelectSession={handleSelectSession}
+              onExportJSON={handleExportJSON}
+              onExportMarkdown={handleExportMarkdown}
+              onRenameSession={startRenameSession}
+              onDeleteSession={(session) => setSessionToDelete(session)}
+              newSessionDisabled={newSessionDisabled}
+            />
+          </div>
+        </div>
+      )}
       {!isSidebarVisible && (
         <Button
           variant="outline"
           size="icon"
-          className="absolute top-4 left-4 z-10 bg-white dark:bg-slate-900"
+          className="absolute top-4 left-4 bg-white dark:bg-slate-900 z-50"
           onClick={toggleSidebar}
           aria-label="Show chat list"
         >
@@ -552,12 +680,12 @@ export function ChatsPage({
         </Button>
       )}
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col z-10">
         {currentSession ? (
           <>
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+                <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 space-y-6">
                   {showConfigBanner && (
                     <ConfigStatusBanner
                       showDebug={showDebugDetails}
@@ -580,14 +708,19 @@ export function ChatsPage({
               </ScrollArea>
             </div>
 
-            <Composer
-              onSend={handleSendMessage}
-              disabled={isComposerDisabled}
-              placeholder={composerPlaceholder}
-            />
+            <div className="px-4 sm:px-6 lg:px-0">
+              <Composer
+                onSend={handleSendMessage}
+                disabled={isComposerDisabled}
+                placeholder={composerPlaceholder}
+                toolOptions={toolOptions}
+                selectedTool={selectedTool}
+                onToolSelect={setSelectedTool}
+              />
+            </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 sm:gap-6 sm:px-6">
             {showConfigBanner && (
               <div className="w-full max-w-xl">
                 <ConfigStatusBanner

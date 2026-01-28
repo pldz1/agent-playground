@@ -1,20 +1,44 @@
 import { useState, useRef, KeyboardEvent } from 'react';
+import type { ChatAgentIntentName } from '@/types';
 import { Button } from './ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Textarea } from './ui/textarea';
-import { Send, Image as ImageIcon, X } from 'lucide-react';
+import { cn } from './ui/utils';
+import { Check, Plus, Send, SlidersHorizontal, X } from 'lucide-react';
 import { toast } from 'sonner';
+
+export type ComposerToolOption = {
+  id: 'auto' | ChatAgentIntentName;
+  label: string;
+  description?: string;
+};
+
+export type ComposerToolId = ComposerToolOption['id'];
 
 interface ComposerProps {
   onSend: (text: string, image?: File) => void;
   disabled?: boolean;
   placeholder?: string;
+  toolOptions?: ComposerToolOption[];
+  selectedTool?: ComposerToolId;
+  onToolSelect?: (tool: ComposerToolId) => void;
 }
 
-export function Composer({ onSend, disabled = false, placeholder }: ComposerProps) {
+export function Composer({
+  onSend,
+  disabled = false,
+  placeholder,
+  toolOptions = [],
+  selectedTool = 'auto',
+  onToolSelect,
+}: ComposerProps) {
   const [text, setText] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isToolMenuOpen, setIsToolMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedToolLabel = toolOptions.find((tool) => tool.id === selectedTool)?.label;
+  const canSelectTool = toolOptions.length > 1;
 
   const handleSend = () => {
     if (!text.trim() && !image) {
@@ -108,17 +132,16 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
 
   return (
     <div
-      className="border-t border-[#E2E8F0] dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+      className="mx-auto mb-4 w-full max-w-3xl rounded-[28px] border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900"
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {/* Image preview */}
       {imagePreview && (
         <div className="mb-3 relative inline-block">
           <img
             src={imagePreview}
             alt="Preview"
-            className="h-24 rounded-lg border border-gray-200 dark:border-gray-700"
+            className="h-24 rounded-xl border border-gray-200 dark:border-gray-700"
           />
           <Button
             size="icon"
@@ -131,50 +154,101 @@ export function Composer({ onSend, disabled = false, placeholder }: ComposerProp
         </div>
       )}
 
-      <div className="flex gap-3">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
-          className="disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:disabled:border-gray-700 dark:disabled:text-gray-500"
-        >
-          <ImageIcon className="size-4" />
-        </Button>
-
+      <div className="flex flex-col gap-3">
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder={
-            placeholder ??
-            'Enter your question... (Press Enter to send / Shift+Enter for a new line)'
-          }
-          className="min-h-[60px] max-h-[200px] resize-none disabled:bg-[#F5F6F8] disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+          placeholder={placeholder ?? 'Enter your message...'}
+          className="min-h-[32px] max-h-[160px] border-none bg-transparent px-0 py-0 text-base shadow-none focus-visible:border-none focus-visible:ring-0 disabled:bg-transparent"
           disabled={disabled}
         />
 
-        <Button
-          onClick={handleSend}
-          disabled={disabled || (!text.trim() && !image)}
-          className="bg-[#4F46E5] hover:bg-[#4338CA] self-end disabled:bg-gray-200 disabled:text-gray-500 disabled:hover:bg-gray-200 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
-        >
-          <Send className="size-4" />
-        </Button>
-      </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled}
+              className="rounded-full text-slate-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              <Plus className="size-4" />
+            </Button>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-        Enter to send • Shift+Enter for a new line • Supports dragging and dropping images
-      </p>
+            <Popover open={isToolMenuOpen} onOpenChange={setIsToolMenuOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={disabled || !canSelectTool}
+                  className={cn(
+                    'rounded-full px-2 text-slate-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800',
+                    selectedTool !== 'auto' &&
+                      'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-200 dark:hover:bg-indigo-500/30',
+                  )}
+                >
+                  <SlidersHorizontal className="size-4" />
+                  <span className="text-sm">Tools</span>
+                  {selectedTool && selectedTool !== 'auto' && selectedToolLabel && (
+                    <span className="text-xs font-medium text-indigo-600 dark:text-indigo-200">
+                      {selectedToolLabel}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={8} className="w-60 p-2">
+                <div className="flex flex-col gap-1">
+                  {toolOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        onToolSelect?.(option.id);
+                        setIsToolMenuOpen(false);
+                      }}
+                      className={cn(
+                        'flex w-full items-start justify-between gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-800',
+                        option.id === selectedTool &&
+                          'bg-slate-100 text-slate-900 dark:bg-gray-800 dark:text-gray-50',
+                      )}
+                    >
+                      <span className="flex flex-col">
+                        <span className="font-medium">{option.label}</span>
+                        {option.description && (
+                          <span className="text-xs text-slate-500 dark:text-gray-400">
+                            {option.description}
+                          </span>
+                        )}
+                      </span>
+                      {option.id === selectedTool && <Check className="mt-0.5 size-4" />}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <Button
+            onClick={handleSend}
+            disabled={disabled || (!text.trim() && !image)}
+            size="icon"
+            className="rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200 disabled:bg-slate-100 disabled:text-slate-400 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+          >
+            <Send className="size-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

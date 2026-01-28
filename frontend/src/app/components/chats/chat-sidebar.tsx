@@ -71,9 +71,9 @@ export function ChatSidebar({
   }, [sessions.length, filteredSessions.length]);
 
   return (
-    <div className="w-96 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-start justify-between gap-3">
+    <div className="h-full w-full lg:w-96 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Recent chats</h2>
           </div>
@@ -97,7 +97,7 @@ export function ChatSidebar({
             </Button>
           </div>
         </div>
-        <div className="relative mt-4">
+        <div className="relative mt-3 sm:mt-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <Input
             placeholder="Search chats..."
@@ -108,7 +108,7 @@ export function ChatSidebar({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 min-h-0 p-5">
+      <ScrollArea className="flex-1 min-h-0 p-4 sm:p-5">
         {sidebarState === 'empty' && (
           <Card className="p-5 text-center space-y-3">
             <h3 className="text-sm font-medium text-slate-900 dark:text-white">No chat yet.</h3>
@@ -133,7 +133,7 @@ export function ChatSidebar({
               <Card
                 key={session.id}
                 className={cn(
-                  'w-80 p-4 cursor-pointer rounded-2xl border border-slate-100/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:ring-2 hover:ring-indigo-200/60 dark:hover:ring-indigo-500/40 hover:shadow-lg',
+                  'w-full p-4 cursor-pointer rounded-2xl border border-slate-100/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:ring-2 hover:ring-indigo-200/60 dark:hover:ring-indigo-500/40 hover:shadow-lg',
                   currentSessionId === session.id
                     ? 'border-indigo-500 shadow-lg bg-gradient-to-br from-indigo-50/80 via-white to-transparent dark:from-indigo-950/60 dark:via-slate-900/70 dark:to-transparent'
                     : '',
