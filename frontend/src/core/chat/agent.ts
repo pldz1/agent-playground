@@ -1,11 +1,9 @@
 import type {
   ChatAgentImageInput,
   ChatAgentInput,
-  ChatAgentIntentName,
   ChatAgentCoreHandleInput,
   ChatAgentCoreHandleOutput,
   ChatAgentOutput,
-  ChatAgentPlanStep,
   ChatAgentToolName,
   ChatAgentToolOutput,
   ChatAgentToolOutputInput,
@@ -15,31 +13,7 @@ import type {
 
 import { route } from './router';
 import { Executor } from './executor';
-
-const PLAN_DESCRIPTIONS: Record<ChatAgentIntentName, string> = {
-  chat: 'Chat message response',
-  reasoning: 'Deep reasoning analysis',
-  webSearch: 'Perform web search',
-  image_generate: 'Generate image',
-  image_understand: 'Understand image content',
-};
-
-function toPlan(plan: ChatAgentIntentName[] = []): ChatAgentPlanStep[] {
-  return plan.map((tool, index) => ({
-    id: `step-${index}`,
-    tool,
-    description: PLAN_DESCRIPTIONS[tool] ?? tool,
-  }));
-}
-
-function normalizeIntents(intents: ChatAgentIntentName[] = []): ChatAgentIntentName[] {
-  const unique: ChatAgentIntentName[] = [];
-  for (const intent of intents) {
-    if (!unique.includes(intent)) unique.push(intent);
-  }
-  if (!unique.length) unique.push('chat');
-  return unique;
-}
+import { buildPlanSteps, normalizePlan } from './plan';
 
 function toToolOutput({ output, index }: ChatAgentToolOutputInput): ChatAgentToolOutput {
   const base: Pick<ChatAgentToolOutput, 'stepId' | 'tool' | 'duration'> = {
@@ -157,7 +131,7 @@ export class ChatAgentCore {
     history,
   }: ChatAgentCoreHandleInput): Promise<ChatAgentCoreHandleOutput> {
     const hasExplicitIntents = Array.isArray(intents) && intents.length > 0;
-    const normalizedIntents = hasExplicitIntents ? normalizeIntents(intents) : [];
+    const normalizedIntents = hasExplicitIntents ? normalizePlan(intents) : [];
     if (!hasExplicitIntents) {
       onProgress?.({ type: 'route:start' });
       const routing = await route({ input, hasImage: Boolean(image) });
@@ -230,7 +204,7 @@ export class ChatAgent {
         intents: intents.map((name) => ({ name, confidence: 1 })),
         duration: result.routing.duration,
       },
-      plan: toPlan(plan),
+      plan: buildPlanSteps(plan),
       toolOutputs: outputs.map((output, index) => toToolOutput({ output, index })),
       answer: cleaned,
       images: images.length ? images : undefined,

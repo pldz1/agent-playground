@@ -1,5 +1,5 @@
 import { logger } from '../logger';
-import type { RuntimeAuthConfig } from '../chat/config';
+import type { RuntimeAuthConfig } from '@/types';
 
 type AgentCompletionArgs = {
   model: string;

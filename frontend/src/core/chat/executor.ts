@@ -2,12 +2,8 @@ import { ChatTool } from '../tools/chatTool';
 import { WebSearchTool } from '../tools/webSearchTool';
 import { ReasoningTool } from '../tools/reasoningTool';
 import { ImageTool } from '../tools/imageTool';
-import type {
-  ChatAgentExecutorContext,
-  ChatAgentExecutorRunInput,
-  ChatAgentIntentName,
-  ChatAgentPlanProgressStep,
-} from '@/types';
+import type { ChatAgentExecutorContext, ChatAgentExecutorRunInput } from '@/types';
+import { buildPlanProgressSteps, normalizePlan } from './plan';
 
 export class Executor {
   tools: {
@@ -30,11 +26,8 @@ export class Executor {
 
   // Executes the resolved plan sequentially and emits progress events.
   async run({ input, intents, image, onProgress, history }: ChatAgentExecutorRunInput): Promise<ChatAgentExecutorContext> {
-    const plan = this.#normalizePlan(intents);
-    const planSteps: ChatAgentPlanProgressStep[] = plan.map((tool, index) => ({
-      id: `step-${index}`,
-      tool,
-    }));
+    const plan = normalizePlan(intents);
+    const planSteps = buildPlanProgressSteps(plan);
 
     if (planSteps.length) {
       onProgress?.({ type: 'plan:ready', steps: planSteps });
@@ -133,13 +126,4 @@ export class Executor {
     return context;
   }
 
-  #normalizePlan(intents: ChatAgentIntentName[]) {
-    const unique: ChatAgentIntentName[] = [];
-    for (const intent of intents || []) {
-      if (!unique.includes(intent)) unique.push(intent);
-    }
-
-    if (!unique.length) unique.push('chat');
-    return unique;
-  }
 }
