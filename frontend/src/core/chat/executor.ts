@@ -63,6 +63,19 @@ export class Executor {
           continue;
         }
 
+        if (step === 'chat_with_image') {
+          const result = await this.tools.chat.reply({
+            input,
+            history,
+            image,
+          });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          if (stepMeta) {
+            onProgress?.({ type: 'step:complete', step: stepMeta });
+          }
+          continue;
+        }
+
         if (step === 'web_search') {
           const result = await this.tools.webSearch.search({ input });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
@@ -85,18 +98,6 @@ export class Executor {
 
         if (step === 'image_generate') {
           const result = await this.tools.image.generate({ prompt: input });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
-          if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
-          }
-          continue;
-        }
-
-        if (step === 'image_understand') {
-          const result = await this.tools.image.understand({
-            prompt: input,
-            image,
-          });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });

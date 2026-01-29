@@ -90,6 +90,12 @@ export function ChatAgentSection({
       enabled: isToolAvailable('chatModel'),
     },
     {
+      value: 'chat_with_image',
+      label: 'Chat with Image',
+      description: 'Chat using a provided image.',
+      enabled: isToolAvailable('visionModel'),
+    },
+    {
       value: 'reasoning',
       label: 'Reasoning',
       description: 'Deep reasoning analysis.',
@@ -106,12 +112,6 @@ export function ChatAgentSection({
       label: 'Image Generate',
       description: 'Generate an image from text.',
       enabled: isToolAvailable('imageModel'),
-    },
-    {
-      value: 'image_understand',
-      label: 'Image Understand',
-      description: 'Analyze a provided image.',
-      enabled: isToolAvailable('visionModel'),
     },
   ] as const;
 
@@ -195,7 +195,7 @@ export function ChatAgentSection({
                       )
                     }
                   >
-                    <SelectTrigger className="w-full sm:w-[240px]">
+                    <SelectTrigger className="w-full sm:w-[240px] ">
                       <SelectValue placeholder="Select a tool" />
                     </SelectTrigger>
                     <SelectContent>
@@ -205,7 +205,7 @@ export function ChatAgentSection({
                           value={option.value}
                           disabled={!option.enabled}
                         >
-                          <span className="flex flex-col gap-0.5">
+                          <span className="flex flex-col gap-0.5 p-1">
                             <span>{option.label}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {option.description}

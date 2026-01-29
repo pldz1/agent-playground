@@ -9,10 +9,10 @@ Output rules (STRICT):
 - Output MUST be valid JSON only. No markdown, no extra text.
 - Use one of the allowed intents:
   - chat
+  - chat_with_image
   - web_search
   - reasoning
   - image_generate
-  - image_understand
 - Prefer minimal tool usage.
 
 Multi-intent Processing:
@@ -27,16 +27,16 @@ Heuristics:
 - If user asks to search the web / latest info / sources / links / news => web_search.
 - If user asks for step-by-step solving, complex analysis, planning, proofs => reasoning.
 - If user asks to generate an image / draw / create a picture / poster => image_generate.
-- If user provides an image or asks "what's in this image" => image_understand.
+- If user provides an image or asks "what's in this image" => chat_with_image.
 - Otherwise => chat.
 
 Examples:
 {"intents":["chat"]}
+{"intents":["chat_with_image"]}
 {"intents":["web_search"]}
-{"intents":["web_search","chat"]}
-{"intents":["web_search","reasoning"]}
+{"intents":["chat","web_search",]}
 {"intents":["image_generate"}]
-{"intents":["image_understand"]}
+{"intents":["chat","image_generate"]}
 
 Now classify the user's request.
 `;

@@ -4,9 +4,9 @@ const INTENT_ALIASES: Record<string, ChatAgentIntentName> = {
   chat: 'chat',
   webSearch: 'web_search',
   web_search: 'web_search',
+  chat_with_image: 'chat_with_image',
   reasoning: 'reasoning',
   image_generate: 'image_generate',
-  image_understand: 'image_understand',
 };
 
 export const normalizeIntentName = (value: unknown): ChatAgentIntentName | null => {
@@ -16,8 +16,6 @@ export const normalizeIntentName = (value: unknown): ChatAgentIntentName | null 
   return INTENT_ALIASES[trimmed] ?? null;
 };
 
-export const toPlanName = (intent: ChatAgentIntentName): ChatAgentPlanName =>
-  `${intent}_plan`;
+export const toPlanName = (intent: ChatAgentIntentName): ChatAgentPlanName => `${intent}_plan`;
 
-export const toToolName = (intent: ChatAgentIntentName): ChatAgentToolName =>
-  `${intent}_tool`;
+export const toToolName = (intent: ChatAgentIntentName): ChatAgentToolName => `${intent}_tool`;

@@ -1,7 +1,6 @@
 import { resolveAuth } from '../chat/config';
 import { logger } from '../logger';
-import { getOpenAIClient } from './openaiClient';
-import type { ImageToolGenerateInput, ImageToolUnderstandInput } from '@/types';
+import type { ImageToolGenerateInput } from '@/types';
 
 type ImageAuthHeaders = {
   url: string;
@@ -113,62 +112,4 @@ export class ImageTool {
     };
   }
 
-  // Performs multimodal understanding over a prompt + image input.
-  async understand({ prompt, image, model }: ImageToolUnderstandInput) {
-    if (!image) {
-      throw new Error('ImageTool.understand requires `image`.');
-    }
-
-    const auth = resolveAuth('image');
-    const client = getOpenAIClient(auth);
-    const modelName = model ?? auth.modelName;
-    const started = now();
-
-    const imageUrl = image.url
-      ? image.url
-      : image.data
-        ? `data:${image.mimeType || 'image/png'};base64,${image.data}`
-        : null;
-
-    if (!imageUrl) {
-      throw new Error('ImageTool.understand requires image.url or image.data');
-    }
-
-    logger.debug('ImageTool.understand:start', {
-      modelName,
-      provider: auth.model.provider,
-    });
-
-    try {
-      const completion = await client.agent.completions.create({
-        model: modelName,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: imageUrl } },
-            ],
-          },
-        ],
-      });
-
-      const duration = Math.round(now() - started);
-      logger.debug('ImageTool.understand:success', {
-        modelName,
-        durationMs: duration,
-      });
-
-      return {
-        text: completion.choices?.[0]?.message?.content ?? '',
-        choice: completion.choices?.[0],
-      };
-    } catch (error) {
-      logger.error('ImageTool.understand:error', {
-        modelName,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  }
 }

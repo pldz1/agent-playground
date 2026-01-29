@@ -19,7 +19,7 @@ interface ChatSessionViewProps {
   isProcessing: boolean;
   progressEntries: ChatProgressEntry[];
   messageEndRef: RefObject<HTMLDivElement|null>;
-  onSendMessage: (text: string, imageFile?: File) => void;
+  onSendMessage: (text: string, imageFiles?: File[]) => void;
   isComposerDisabled: boolean;
   composerPlaceholder: string;
   toolOptions: ComposerToolOption[];

@@ -148,15 +148,14 @@ export const normalizeSettings = (raw: unknown, base: AppSettings): AppSettings 
     const allowedTools: AppSettings['chatAgent']['defaultTool'][] = [
       'auto',
       'chat',
+      'chat_with_image',
       'reasoning',
       'web_search',
       'image_generate',
-      'image_understand',
     ];
     if (allowedTools.includes(candidate as AppSettings['chatAgent']['defaultTool'])) {
       return candidate as AppSettings['chatAgent']['defaultTool'];
     }
-    if (candidate === 'webSearch') return 'web_search';
     return fallback;
   };
 

@@ -1,9 +1,9 @@
 export type ChatAgentIntentName =
   | 'chat'
   | 'web_search'
+  | 'chat_with_image'
   | 'reasoning'
-  | 'image_generate'
-  | 'image_understand';
+  | 'image_generate';
 
 export type ChatAgentPlanName = `${ChatAgentIntentName}_plan`;
 
@@ -56,6 +56,9 @@ export interface ChatAgentHistoryMessage {
   content: string;
 }
 
+export type ChatAgentRawImageInput = File | string | Array<File | string>;
+export type ChatAgentImageInputPayload = ChatAgentImageInput | ChatAgentImageInput[];
+
 export interface ChatAgentPlanProgressStep {
   id: string;
   tool: ChatAgentPlanName;
@@ -78,7 +81,7 @@ export interface ChatAgentImageInput {
 
 export interface ChatAgentInput {
   text: string;
-  image?: File | string;
+  image?: ChatAgentRawImageInput;
   intents?: ChatAgentIntentName[];
   onProgress?: (event: ChatAgentProgressEvent) => void;
   history?: ChatAgentHistoryMessage[];
@@ -94,7 +97,7 @@ export interface ChatAgentOutput {
 
 export interface ChatAgentExecutorContext {
   input: string;
-  image?: ChatAgentImageInput;
+  image?: ChatAgentImageInputPayload;
   outputs: ChatAgentToolRunOutput[];
   plan: ChatAgentIntentName[];
 }
@@ -102,7 +105,7 @@ export interface ChatAgentExecutorContext {
 export interface ChatAgentExecutorRunInput {
   input: string;
   intents: ChatAgentIntentName[];
-  image?: ChatAgentImageInput;
+  image?: ChatAgentImageInputPayload;
   onProgress?: (event: ChatAgentProgressEvent) => void;
   history?: ChatAgentHistoryMessage[];
 }
@@ -123,15 +126,9 @@ export interface ImageToolGenerateInput {
   model?: string;
 }
 
-export interface ImageToolUnderstandInput {
-  prompt: string;
-  image?: ChatAgentImageInput;
-  model?: string;
-}
-
 export interface ChatAgentCoreHandleInput {
   input: string;
-  image?: ChatAgentImageInput;
+  image?: ChatAgentImageInputPayload;
   intents?: ChatAgentIntentName[];
   onProgress?: (event: ChatAgentProgressEvent) => void;
   history?: ChatAgentInput['history'];

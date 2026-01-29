@@ -10,6 +10,7 @@ import type {
   ModelConfigIssue,
   Session,
 } from '@/types';
+import { describePlanName } from '@/core/chat/plan';
 import { type ComposerToolId, type ComposerToolOption } from '../components/chats/composer';
 import { ChatSidebarPanel } from '../components/chats/sidebar-panel';
 import { ChatSessionView } from '../components/chats/session-view';
@@ -61,18 +62,15 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const PLAN_LABELS: Record<ChatAgentPlanName, string> = {
-  chat_plan: 'chat_plan',
-  web_search_plan: 'web_search_plan',
-  reasoning_plan: 'reasoning_plan',
-  image_generate_plan: 'image_generate_plan',
-  image_understand_plan: 'image_understand_plan',
+const filesToDataUrls = async (files: File[]): Promise<string[]> => {
+  const dataUrls = await Promise.all(files.map((file) => fileToDataUrl(file)));
+  return dataUrls.filter(Boolean);
 };
 
 const ROUTE_ENTRY_ID = 'route';
 const ROUTE_LABEL = 'Route: Inferred intention';
 
-const describePlan = (tool: ChatAgentPlanName) => PLAN_LABELS[tool] ?? tool;
+const describePlan = (tool: ChatAgentPlanName) => describePlanName(tool);
 
 export function ChatsPage({
   debugMode,
@@ -145,6 +143,14 @@ export function ChatsPage({
       });
     }
 
+    if (isAvailable('vision', settings.chatAgent.visionModel)) {
+      options.push({
+        id: 'chat_with_image',
+        label: 'Chat with Image',
+        description: 'Chat using a provided image.',
+      });
+    }
+
     if (isAvailable('reasoning', settings.chatAgent.reasoningModel)) {
       options.push({
         id: 'reasoning',
@@ -169,13 +175,7 @@ export function ChatsPage({
       });
     }
 
-    if (isAvailable('vision', settings.chatAgent.visionModel)) {
-      options.push({
-        id: 'image_understand',
-        label: 'Image Understand',
-        description: 'Analyze a provided image.',
-      });
-    }
+    
 
     return options;
   }, [
@@ -386,7 +386,7 @@ export function ChatsPage({
   }, [currentSessionId, currentSession?.messages.length, progressEntries.length]);
 
   const handleSendMessage = useCallback(
-    async (text: string, imageFile?: File) => {
+    async (text: string, imageFiles?: File[]) => {
       if (!isModelConfigured) {
         toast.warning('Unable to send', {
           description: 'Please complete the model configuration before starting the conversation.',
@@ -394,17 +394,17 @@ export function ChatsPage({
         return;
       }
 
-      if (!text.trim() && !imageFile) {
+      if (!text.trim() && (!imageFiles || imageFiles.length === 0)) {
         return;
       }
 
       const targetSession = ensureSession(currentSessionId);
       setCurrentSessionId(targetSession.id);
 
-      let imageData: string | undefined;
-      if (imageFile) {
+      let imageData: string[] | undefined;
+      if (imageFiles && imageFiles.length > 0) {
         try {
-          imageData = await fileToDataUrl(imageFile);
+          imageData = await filesToDataUrls(imageFiles);
         } catch (error) {
           toast.error(error instanceof Error ? error.message : 'Image processing failed.');
           return;
@@ -417,7 +417,7 @@ export function ChatsPage({
         role: 'user',
         content: text,
         timestamp: now,
-        images: imageData ? [imageData] : undefined,
+        images: imageData && imageData.length > 0 ? imageData : undefined,
       };
 
       const sessionAfterUser: Session = {

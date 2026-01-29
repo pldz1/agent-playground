@@ -38,8 +38,8 @@ function normalizeRoute(route: unknown): ChatAgentIntentName[] {
 export async function route({ input, hasImage = false }: ChatAgentRouteInput): Promise<ChatAgentRouteResult> {
   if (hasImage) {
     return {
-      intents: ['image_understand'],
-      raw: { intents: 'image_understand' },
+      intents: ['chat_with_image'],
+      raw: { intents: 'chat_with_image' },
       model: 'heuristic',
       duration: 0,
     };

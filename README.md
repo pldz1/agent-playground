@@ -4,7 +4,7 @@ Agent Playground is a **local-first AI Agent desktop app**. The frontend is buil
 
 ## Highlights
 
-- Multi-tool routing: auto-selects `chat / webSearch / reasoning / image_generate / image_understand`
+- Multi-tool routing: auto-selects `chat / chat_with_image / webSearch / reasoning / image_generate`
 - Execution plan & progress: UI renders route, plan steps, and tool status
 - Image generation & understanding
 - Multi-session management: search, rename, delete

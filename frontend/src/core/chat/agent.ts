@@ -1,6 +1,7 @@
 import type {
   ChatAgentImageInput,
   ChatAgentInput,
+  ChatAgentImageInputPayload,
   ChatAgentCoreHandleInput,
   ChatAgentCoreHandleOutput,
   ChatAgentOutput,
@@ -51,6 +52,10 @@ function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
       return current.result.text;
     }
 
+    if (current.step === 'chat_with_image_tool' && current.result?.text) {
+      return current.result.text;
+    }
+
     if (current.step === 'reasoning_tool' && current.result?.text) {
       return current.result.text;
     }
@@ -59,9 +64,6 @@ function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
       return current.result?.text;
     }
 
-    if (current.step === 'image_understand_tool' && current.result?.text) {
-      return current.result.text;
-    }
   }
 
   return '';
@@ -93,22 +95,35 @@ function collectImages(outputs: ChatAgentToolRunOutput[]): string[] {
   return images;
 }
 
-function parseImageInput(image?: ChatAgentInput['image']): ChatAgentImageInput | undefined {
+function parseImageString(value: string): ChatAgentImageInput | null {
+  if (!value) return null;
+  if (value.startsWith('data:')) {
+    const [meta, base64] = value.split(',', 2);
+    const mimeMatch = meta.match(/^data:(.*?);base64$/);
+    return {
+      data: base64,
+      mimeType: mimeMatch?.[1],
+    };
+  }
+
+  return {
+    url: value,
+  };
+}
+
+function parseImageInput(image?: ChatAgentInput['image']): ChatAgentImageInputPayload | undefined {
   if (!image) return undefined;
 
-  if (typeof image === 'string') {
-    if (image.startsWith('data:')) {
-      const [meta, base64] = image.split(',', 2);
-      const mimeMatch = meta.match(/^data:(.*?);base64$/);
-      return {
-        data: base64,
-        mimeType: mimeMatch?.[1],
-      };
-    }
+  if (Array.isArray(image)) {
+    const parsed = image
+      .map((item) => (typeof item === 'string' ? parseImageString(item) : null))
+      .filter((value): value is ChatAgentImageInput => Boolean(value));
+    return parsed.length ? parsed : undefined;
+  }
 
-    return {
-      url: image,
-    };
+  if (typeof image === 'string') {
+    const parsed = parseImageString(image);
+    return parsed ?? undefined;
   }
 
   return undefined;
@@ -133,8 +148,9 @@ export class ChatAgentCore {
     const hasExplicitIntents = Array.isArray(intents) && intents.length > 0;
     const normalizedIntents = hasExplicitIntents ? normalizePlan(intents) : [];
     if (!hasExplicitIntents) {
+      const hasImage = Array.isArray(image) ? image.length > 0 : Boolean(image);
       onProgress?.({ type: 'route:start' });
-      const routing = await route({ input, hasImage: Boolean(image) });
+      const routing = await route({ input, hasImage });
       onProgress?.({
         type: 'route:complete',
         intents: routing.intents,

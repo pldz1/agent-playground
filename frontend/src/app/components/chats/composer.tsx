@@ -16,13 +16,18 @@ export type ComposerToolOption = {
 export type ComposerToolId = ComposerToolOption['id'];
 
 interface ComposerProps {
-  onSend: (text: string, image?: File) => void;
+  onSend: (text: string, images?: File[]) => void;
   disabled?: boolean;
   placeholder?: string;
   toolOptions?: ComposerToolOption[];
   selectedTool?: ComposerToolId;
   onToolSelect?: (tool: ComposerToolId) => void;
 }
+
+type ImagePreview = {
+  file: File;
+  dataUrl: string;
+};
 
 export function Composer({
   onSend,
@@ -33,8 +38,7 @@ export function Composer({
   onToolSelect,
 }: ComposerProps) {
   const [text, setText] = useState('');
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<ImagePreview[]>([]);
   const [isToolMenuOpen, setIsToolMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedToolLabel = toolOptions.find((tool) => tool.id === selectedTool)?.label;
@@ -46,15 +50,17 @@ export function Composer({
       return;
     }
 
-    if (!text.trim() && !image) {
+    if (!text.trim() && imagePreviews.length === 0) {
       toast.error('Please enter a message or upload an image');
       return;
     }
 
-    onSend(text, image || undefined);
+    onSend(
+      text,
+      imagePreviews.length ? imagePreviews.map((preview) => preview.file) : undefined,
+    );
     setText('');
-    setImage(null);
-    setImagePreview(null);
+    setImagePreviews([]);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -64,38 +70,42 @@ export function Composer({
     }
   };
 
-  const handleImageSelect = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
+  const handleImageSelect = (files: File[]) => {
+    if (!files.length) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
-    }
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
 
-    setImage(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string | undefined;
+        if (!dataUrl) return;
+        setImagePreviews((prev) => [...prev, { file, dataUrl }]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageSelect(file);
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    handleImageSelect(files);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleImageSelect(file);
-    }
+    const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    handleImageSelect(files);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -108,6 +118,7 @@ export function Composer({
       return;
     }
 
+    const files: File[] = [];
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -121,18 +132,14 @@ export function Composer({
             : new File([file], `clipboard-image-${Date.now()}.png`, {
                 type: file.type,
               });
-        handleImageSelect(namedFile);
-        break;
+        files.push(namedFile);
       }
     }
+    handleImageSelect(files);
   };
 
-  const removeImage = () => {
-    setImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const removeImage = (index: number) => {
+    setImagePreviews((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   };
 
   return (
@@ -141,21 +148,25 @@ export function Composer({
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {imagePreview && (
-        <div className="mb-3 relative inline-block">
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="h-24 rounded-xl border border-gray-200 dark:border-gray-700"
-          />
-          <Button
-            size="icon"
-            variant="destructive"
-            className="absolute -top-2 -right-2 size-6 rounded-full"
-            onClick={removeImage}
-          >
-            <X className="size-3" />
-          </Button>
+      {imagePreviews.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-3">
+          {imagePreviews.map((preview, index) => (
+            <div key={`${preview.dataUrl}-${index}`} className="relative inline-block">
+              <img
+                src={preview.dataUrl}
+                alt={`Preview ${index + 1}`}
+                className="h-24 rounded-xl border border-gray-200 dark:border-gray-700"
+              />
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 size-6 rounded-full"
+                onClick={() => removeImage(index)}
+              >
+                <X className="size-3" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -163,6 +174,7 @@ export function Composer({
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
         onChange={handleFileChange}
       />
@@ -245,7 +257,7 @@ export function Composer({
 
           <Button
             onClick={handleSend}
-            disabled={!text.trim() && !image}
+            disabled={!text.trim() && imagePreviews.length === 0}
             size="icon"
             className="rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200 disabled:bg-slate-100 disabled:text-slate-400 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
           >
