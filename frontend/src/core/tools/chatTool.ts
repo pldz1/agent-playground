@@ -30,7 +30,12 @@ export class ChatTool {
       : image
         ? [image]
         : [];
-    const hasImage = images.some((entry) => Boolean(entry?.data || entry?.url));
+    const historyImages = Array.isArray(history)
+      ? history.flatMap((entry) => (Array.isArray(entry.images) ? entry.images : []))
+      : [];
+    const hasImage =
+      images.some((entry) => Boolean(entry?.data || entry?.url)) ||
+      historyImages.some((item) => Boolean(item));
     const auth = resolveAuth(hasImage ? 'vision' : 'chat');
     const client = getOpenAIClient(auth);
     const modelName = model ?? auth.modelName;
@@ -53,6 +58,20 @@ export class ChatTool {
             Boolean(entry?.content) && (entry?.role === 'user' || entry?.role === 'assistant'),
         )
         .forEach((entry) => {
+          const imageUrls = Array.isArray(entry.images)
+            ? entry.images.filter((value): value is string => Boolean(value))
+            : [];
+          if (imageUrls.length) {
+            const text = entry.content.trim() || '[Image]';
+            messages.push({
+              role: entry.role,
+              content: [
+                { type: 'text', text },
+                ...imageUrls.map((url) => ({ type: 'image_url', image_url: { url } }) as const),
+              ],
+            });
+            return;
+          }
           messages.push({
             role: entry.role,
             content: entry.content,

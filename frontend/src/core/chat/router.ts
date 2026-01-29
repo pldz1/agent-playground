@@ -15,10 +15,19 @@ function safeJsonParse(text: string): unknown | null {
   }
 }
 
-function normalizeRoute(route: unknown): ChatAgentIntentName[] {
+type NormalizedRoute = {
+  intents: ChatAgentIntentName[];
+  useContext?: boolean;
+};
+
+function normalizeRoute(route: unknown): NormalizedRoute {
   const intents =
     typeof route === 'object' && route && 'intents' in route
       ? (route as { intents?: unknown }).intents
+      : undefined;
+  const useContext =
+    typeof route === 'object' && route && 'useContext' in route
+      ? (route as { useContext?: unknown }).useContext
       : undefined;
 
   const rawIntents = Array.isArray(intents)
@@ -31,7 +40,10 @@ function normalizeRoute(route: unknown): ChatAgentIntentName[] {
     .map((value) => normalizeIntentName(value))
     .filter((value): value is ChatAgentIntentName => Boolean(value));
 
-  return cleaned.length ? cleaned : ['chat'];
+  return {
+    intents: cleaned.length ? cleaned : ['chat'],
+    useContext: typeof useContext === 'boolean' ? useContext : undefined,
+  };
 }
 
 // Routes user input to one or more tool intents using the routing model.
@@ -75,10 +87,11 @@ export async function route({ input, hasImage = false }: ChatAgentRouteInput): P
     const text = completion.choices?.[0]?.message?.content ?? '{}';
     const parsed = safeJsonParse(text);
     const normalizedPayload = parsed ?? {};
-    const intents = normalizeRoute(normalizedPayload);
+    const normalized = normalizeRoute(normalizedPayload);
 
     return {
-      intents,
+      intents: normalized.intents,
+      useContext: normalized.useContext,
       raw: normalizedPayload,
       model: modelName,
       duration,

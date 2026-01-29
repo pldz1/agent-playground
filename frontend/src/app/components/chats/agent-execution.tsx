@@ -115,6 +115,9 @@ export function AgentExecutionCard({ routing, plan, toolOutputs }: AgentExecutio
               Duration: {formatDuration(routing.duration)}
             </p>
           )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Context: {routing.useContext === undefined ? 'auto' : routing.useContext ? 'on' : 'off'}
+          </p>
           <div className="flex flex-wrap gap-2 mt-2">
             {routing.intents.map((intent, index) => (
               <span

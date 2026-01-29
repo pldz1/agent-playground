@@ -4,6 +4,8 @@ import type {
   ChatAgentImageInputPayload,
   ChatAgentCoreHandleInput,
   ChatAgentCoreHandleOutput,
+  ChatAgentHistoryMessage,
+  ChatAgentIntentName,
   ChatAgentOutput,
   ChatAgentToolName,
   ChatAgentToolOutput,
@@ -129,6 +131,16 @@ function parseImageInput(image?: ChatAgentInput['image']): ChatAgentImageInputPa
   return undefined;
 }
 
+const INTENTS_WITH_CONTEXT = new Set<ChatAgentIntentName>(['chat', 'chat_with_image']);
+
+function resolveHistoryForIntents(
+  intents: ChatAgentIntentName[],
+  history?: ChatAgentHistoryMessage[],
+): ChatAgentHistoryMessage[] | undefined {
+  if (!Array.isArray(history) || history.length === 0) return undefined;
+  return intents.some((intent) => INTENTS_WITH_CONTEXT.has(intent)) ? history : undefined;
+}
+
 // Orchestrates routing + execution and exposes low-level progress events.
 export class ChatAgentCore {
   executor: Executor;
@@ -154,13 +166,19 @@ export class ChatAgentCore {
       onProgress?.({
         type: 'route:complete',
         intents: routing.intents,
+        useContext: routing.useContext,
       });
+      const historyInput = routing.useContext
+        ? history
+        : routing.useContext === false
+          ? undefined
+          : resolveHistoryForIntents(routing.intents, history);
       const result = await this.executor.run({
         input,
         intents: routing.intents,
         image,
         onProgress,
-        history,
+        history: historyInput,
       });
 
       return {
@@ -169,12 +187,13 @@ export class ChatAgentCore {
       };
     }
 
+    const historyInput = resolveHistoryForIntents(normalizedIntents, history);
     const result = await this.executor.run({
       input,
       intents: normalizedIntents,
       image,
       onProgress,
-      history,
+      history: historyInput,
     });
 
     return {
@@ -219,6 +238,7 @@ export class ChatAgent {
       routing: {
         intents: intents.map((name) => ({ name, confidence: 1 })),
         duration: result.routing.duration,
+        useContext: result.routing.useContext,
       },
       plan: buildPlanSteps(plan),
       toolOutputs: outputs.map((output, index) => toToolOutput({ output, index })),

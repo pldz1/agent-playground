@@ -19,6 +19,7 @@ export interface ChatAgentIntent {
 export interface ChatAgentRouting {
   intents: ChatAgentIntent[];
   duration?: number;
+  useContext?: boolean;
 }
 
 export interface ChatAgentPlanStep {
@@ -54,6 +55,7 @@ export interface ChatAgentToolOutputInput {
 export interface ChatAgentHistoryMessage {
   role: 'user' | 'assistant';
   content: string;
+  images?: string[];
 }
 
 export type ChatAgentRawImageInput = File | string | Array<File | string>;
@@ -66,7 +68,7 @@ export interface ChatAgentPlanProgressStep {
 
 export type ChatAgentProgressEvent =
   | { type: 'route:start' }
-  | { type: 'route:complete'; intents: ChatAgentIntentName[] }
+  | { type: 'route:complete'; intents: ChatAgentIntentName[]; useContext?: boolean }
   | { type: 'plan:ready'; steps: ChatAgentPlanProgressStep[] }
   | { type: 'step:start'; step: ChatAgentPlanProgressStep }
   | { type: 'step:complete'; step: ChatAgentPlanProgressStep }
@@ -143,6 +145,7 @@ export interface ChatAgentRouteResult {
   raw: unknown;
   model: string;
   duration?: number;
+  useContext?: boolean;
 }
 
 export interface Message {

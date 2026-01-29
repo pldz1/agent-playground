@@ -13,6 +13,10 @@ Output rules (STRICT):
   - web_search
   - reasoning
   - image_generate
+- Include a boolean key "useContext" indicating whether to pass chat history.
+- Set "useContext" to false for greetings, small talk, or new topics unrelated to recent messages.
+- Set "useContext" to true only when the user's request explicitly references prior context
+  ("as mentioned before", "continue", "same task", "based on earlier") or relies on past outputs.
 - Prefer minimal tool usage.
 
 Multi-intent Processing:
@@ -31,12 +35,13 @@ Heuristics:
 - Otherwise => chat.
 
 Examples:
-{"intents":["chat"]}
-{"intents":["chat_with_image"]}
-{"intents":["web_search"]}
-{"intents":["chat","web_search",]}
-{"intents":["image_generate"}]
-{"intents":["chat","image_generate"]}
+{"intents":["chat"],"useContext":false}
+{"intents":["chat"],"useContext":true}
+{"intents":["chat_with_image"],"useContext":true}
+{"intents":["web_search"],"useContext":false}
+{"intents":["chat","web_search"],"useContext":true}
+{"intents":["image_generate"],"useContext":false}
+{"intents":["chat","image_generate"],"useContext":true}
 
 Now classify the user's request.
 `;

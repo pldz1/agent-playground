@@ -3,6 +3,7 @@ import { chatAgent } from '@/core';
 import { getSessions, saveSession, deleteSession, renameSession, useAppStore } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
 import type {
+  ChatAgentHistoryMessage,
   ChatAgentProgressEvent,
   ChatAgentPlanName,
   ModelRole,
@@ -322,11 +323,15 @@ export function ChatsPage({
             },
           ];
         case 'route:complete': {
-          const detail =
+          const intentText =
             event.intents && event.intents.length
               ? `Intents: ${event.intents.join(' / ')}`
               : 'Unable to identify the intent.';
-          return ensureRouteEntry('success', detail);
+          const contextLabel =
+            event.useContext === undefined
+              ? 'Context: auto'
+              : `Context: ${event.useContext ? 'on' : 'off'}`;
+          return ensureRouteEntry('success', `${intentText} · ${contextLabel}`);
         }
         case 'plan:ready': {
           const existingIds = new Set(prev.map((entry) => entry.id));
@@ -450,16 +455,16 @@ export function ChatsPage({
                 const content =
                   stripInlineImageData(trimmed) ||
                   (message.images?.length ? `[Image message x${message.images.length}]` : '');
+                const images = message.images?.length ? message.images : undefined;
                 return content
                   ? {
                       role: message.role,
                       content,
+                      images,
                     }
                   : null;
               })
-              .filter((entry): entry is { role: 'user' | 'assistant'; content: string } =>
-                Boolean(entry),
-              )
+              .filter((entry): entry is ChatAgentHistoryMessage => Boolean(entry))
           : [];
       const historyInput = history.length > 0 ? history : undefined;
 
