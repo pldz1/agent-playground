@@ -47,19 +47,19 @@ function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
       return current.error;
     }
 
-    if (current.step === 'chat' && current.result?.text) {
+    if (current.step === 'chat_tool' && current.result?.text) {
       return current.result.text;
     }
 
-    if (current.step === 'reasoning' && current.result?.text) {
+    if (current.step === 'reasoning_tool' && current.result?.text) {
       return current.result.text;
     }
 
-    if (current.step === 'webSearch' && current.result?.text) {
+    if (current.step === 'web_search_tool' && current.result?.text) {
       return current.result?.text;
     }
 
-    if (current.step === 'image_understand' && current.result?.text) {
+    if (current.step === 'image_understand_tool' && current.result?.text) {
       return current.result.text;
     }
   }
@@ -86,7 +86,7 @@ function collectImages(outputs: ChatAgentToolRunOutput[]): string[] {
   const images: string[] = [];
   for (const output of outputs) {
     if ('error' in output) continue;
-    if (output.step === 'image_generate' && output.result?.image) {
+    if (output.step === 'image_generate_tool' && output.result?.image) {
       images.push(`data:image/png;base64,${output.result.image}`);
     }
   }

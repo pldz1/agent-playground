@@ -4,6 +4,7 @@ import { ReasoningTool } from '../tools/reasoningTool';
 import { ImageTool } from '../tools/imageTool';
 import type { ChatAgentExecutorContext, ChatAgentExecutorRunInput } from '@/types';
 import { buildPlanProgressSteps, normalizePlan } from './plan';
+import { toToolName } from './naming';
 
 export class Executor {
   tools: {
@@ -43,6 +44,7 @@ export class Executor {
     for (let index = 0; index < plan.length; index += 1) {
       const step = plan[index];
       const stepMeta = planSteps[index];
+      const toolName = toToolName(step);
       const startedAt = Date.now();
       if (stepMeta) {
         onProgress?.({ type: 'step:start', step: stepMeta });
@@ -54,16 +56,16 @@ export class Executor {
             input,
             history,
           });
-          context.outputs.push({ step, result, duration: Date.now() - startedAt });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
           continue;
         }
 
-        if (step === 'webSearch') {
+        if (step === 'web_search') {
           const result = await this.tools.webSearch.search({ input });
-          context.outputs.push({ step, result, duration: Date.now() - startedAt });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -74,7 +76,7 @@ export class Executor {
           const result = await this.tools.reasoning.think({
             input,
           });
-          context.outputs.push({ step, result, duration: Date.now() - startedAt });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -83,7 +85,7 @@ export class Executor {
 
         if (step === 'image_generate') {
           const result = await this.tools.image.generate({ prompt: input });
-          context.outputs.push({ step, result, duration: Date.now() - startedAt });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -95,7 +97,7 @@ export class Executor {
             prompt: input,
             image,
           });
-          context.outputs.push({ step, result, duration: Date.now() - startedAt });
+          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -103,7 +105,7 @@ export class Executor {
         }
 
         const unknownMessage = `Unknown step: ${step}`;
-        context.outputs.push({ step, error: unknownMessage, duration: Date.now() - startedAt });
+        context.outputs.push({ step: toolName, error: unknownMessage, duration: Date.now() - startedAt });
         if (stepMeta) {
           onProgress?.({
             type: 'step:error',
@@ -113,7 +115,7 @@ export class Executor {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        context.outputs.push({ step, error: message, duration: Date.now() - startedAt });
+        context.outputs.push({ step: toolName, error: message, duration: Date.now() - startedAt });
         if (stepMeta) {
           onProgress?.({ type: 'step:error', step: stepMeta, error: message });
         }

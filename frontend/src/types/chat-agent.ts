@@ -1,11 +1,13 @@
 export type ChatAgentIntentName =
-  | 'webSearch'
-  | 'reasoning'
   | 'chat'
+  | 'web_search'
+  | 'reasoning'
   | 'image_generate'
   | 'image_understand';
 
-export type ChatAgentToolName = ChatAgentIntentName;
+export type ChatAgentPlanName = `${ChatAgentIntentName}_plan`;
+
+export type ChatAgentToolName = `${ChatAgentIntentName}_tool`;
 
 export type ChatAgentStepStatus = 'pending' | 'running' | 'success' | 'fail';
 
@@ -21,7 +23,7 @@ export interface ChatAgentRouting {
 
 export interface ChatAgentPlanStep {
   id: string;
-  tool: ChatAgentToolName;
+  tool: ChatAgentPlanName;
   description: string;
 }
 
@@ -32,7 +34,7 @@ export interface ChatAgentToolRunResult {
 }
 
 export type ChatAgentToolRunOutput =
-  | { step: ChatAgentIntentName; result: ChatAgentToolRunResult; duration?: number }
+  | { step: ChatAgentToolName; result: ChatAgentToolRunResult; duration?: number }
   | { step: string; error: string; duration?: number };
 
 export interface ChatAgentToolOutput {
@@ -56,7 +58,7 @@ export interface ChatAgentHistoryMessage {
 
 export interface ChatAgentPlanProgressStep {
   id: string;
-  tool: ChatAgentToolName;
+  tool: ChatAgentPlanName;
 }
 
 export type ChatAgentProgressEvent =

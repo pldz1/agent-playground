@@ -3,6 +3,7 @@ import { logger } from '../logger';
 import { routerPrompt } from '../prompts/routerPrompt';
 import { getOpenAIClient } from '../tools/openaiClient';
 import type { ChatAgentIntentName, ChatAgentRouteInput, ChatAgentRouteResult } from '@/types';
+import { normalizeIntentName } from './naming';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -15,24 +16,20 @@ function safeJsonParse(text: string): unknown | null {
 }
 
 function normalizeRoute(route: unknown): ChatAgentIntentName[] {
-  const allowed = new Set<ChatAgentIntentName>([
-    'chat',
-    'webSearch',
-    'reasoning',
-    'image_generate',
-    'image_understand',
-  ]);
-
   const intents =
     typeof route === 'object' && route && 'intents' in route
       ? (route as { intents?: unknown }).intents
       : undefined;
 
-  const rawIntents = Array.isArray(intents) && intents.length ? intents : [];
+  const rawIntents = Array.isArray(intents)
+    ? intents
+    : typeof intents === 'string'
+      ? [intents]
+      : [];
 
   const cleaned = rawIntents
-    .map((value) => String(value || '').trim())
-    .filter((value): value is ChatAgentIntentName => allowed.has(value as ChatAgentIntentName));
+    .map((value) => normalizeIntentName(value))
+    .filter((value): value is ChatAgentIntentName => Boolean(value));
 
   return cleaned.length ? cleaned : ['chat'];
 }

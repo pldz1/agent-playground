@@ -96,7 +96,7 @@ export function ChatAgentSection({
       enabled: isToolAvailable('reasoningModel'),
     },
     {
-      value: 'webSearch',
+      value: 'web_search',
       label: 'Web Search',
       description: 'Search the web before responding.',
       enabled: isToolAvailable('webSearchModel'),

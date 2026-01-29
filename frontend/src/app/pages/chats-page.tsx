@@ -4,7 +4,7 @@ import { getSessions, saveSession, deleteSession, renameSession, useAppStore } f
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
 import type {
   ChatAgentProgressEvent,
-  ChatAgentToolName,
+  ChatAgentPlanName,
   ModelRole,
   Message,
   ModelConfigIssue,
@@ -61,18 +61,18 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const TOOL_LABELS: Record<ChatAgentToolName, string> = {
-  chat: 'Chat',
-  webSearch: 'WEB Search',
-  reasoning: 'Reasoning',
-  image_generate: 'Generating image',
-  image_understand: 'Understand image',
+const PLAN_LABELS: Record<ChatAgentPlanName, string> = {
+  chat_plan: 'chat_plan',
+  web_search_plan: 'web_search_plan',
+  reasoning_plan: 'reasoning_plan',
+  image_generate_plan: 'image_generate_plan',
+  image_understand_plan: 'image_understand_plan',
 };
 
 const ROUTE_ENTRY_ID = 'route';
 const ROUTE_LABEL = 'Route: Inferred intention';
 
-const describeTool = (tool: ChatAgentToolName) => TOOL_LABELS[tool] ?? tool;
+const describePlan = (tool: ChatAgentPlanName) => PLAN_LABELS[tool] ?? tool;
 
 export function ChatsPage({
   debugMode,
@@ -155,7 +155,7 @@ export function ChatsPage({
 
     if (isAvailable('webSearch', settings.chatAgent.webSearchModel)) {
       options.push({
-        id: 'webSearch',
+        id: 'web_search',
         label: 'Web Search',
         description: 'Search the web before responding.',
       });
@@ -334,9 +334,9 @@ export function ChatsPage({
             .filter((step) => !existingIds.has(step.id))
             .map((step) => ({
               id: step.id,
-              label: describeTool(step.tool),
+              label: describePlan(step.tool),
               status: 'pending' as const,
-              detail: `Waiting for execution: ${describeTool(step.tool)}`,
+              detail: `Waiting for execution: ${describePlan(step.tool)}`,
             }));
           return [...prev, ...pendingSteps];
         }
@@ -347,7 +347,7 @@ export function ChatsPage({
               ? {
                   ...entry,
                   status: 'running',
-                  detail: `${describeTool(event.step.tool)} ...`,
+                  detail: `${describePlan(event.step.tool)} ...`,
                   duration: undefined,
                 }
               : entry,
@@ -358,7 +358,7 @@ export function ChatsPage({
               ? withDuration({
                   ...entry,
                   status: 'success',
-                  detail: `${describeTool(event.step.tool)} completed.`,
+                  detail: `${describePlan(event.step.tool)} completed.`,
                 })
               : entry,
           );
