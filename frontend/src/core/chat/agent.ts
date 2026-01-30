@@ -45,30 +45,21 @@ function pickFinalAnswer(outputs: ChatAgentToolRunOutput[]): string {
 
   for (let i = outputs.length - 1; i >= 0; i -= 1) {
     const current = outputs[i];
-
     if ('error' in current) {
       return current.error;
     }
-
-    if (current.step === 'chat_tool' && current.result?.text) {
-      return current.result.text;
-    }
-
-    if (current.step === 'chat_with_image_tool' && current.result?.text) {
-      return current.result.text;
-    }
-
-    if (current.step === 'reasoning_tool' && current.result?.text) {
-      return current.result.text;
-    }
-
-    if (current.step === 'web_search_tool' && current.result?.text) {
-      return current.result?.text;
-    }
-
   }
 
-  return '';
+  const chunks: string[] = [];
+  for (const output of outputs) {
+    if ('error' in output) continue;
+    const text = output.result?.text?.trim();
+    if (text) {
+      chunks.push(text);
+    }
+  }
+
+  return chunks.join('\n\n');
 }
 
 const INLINE_IMAGE_PATTERN = /!\[[^\]]*\]\((data:image\/[^)]+)\)/g;

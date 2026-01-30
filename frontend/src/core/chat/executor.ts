@@ -6,6 +6,33 @@ import type { ChatAgentExecutorContext, ChatAgentExecutorRunInput } from '@/type
 import { buildPlanProgressSteps, normalizePlan } from './plan';
 import { toToolName } from './naming';
 
+const MAX_PREVIOUS_OUTPUT_LENGTH = 2000;
+const MAX_PREVIOUS_OUTPUTS = 2;
+
+function truncateOutput(content: string): string {
+  if (content.length <= MAX_PREVIOUS_OUTPUT_LENGTH) return content;
+  return `${content.slice(0, MAX_PREVIOUS_OUTPUT_LENGTH - 3)}...`;
+}
+
+function buildStepInput(baseInput: string, previousOutputs: string[]): string {
+  const validOutputs = previousOutputs
+    .map((text) => text.trim())
+    .filter((text) => Boolean(text));
+  if (!validOutputs.length) return baseInput;
+  const normalizedBase = baseInput.trim() || baseInput;
+  const previousSection = validOutputs
+    .map((text, index) => `${index + 1}. ${truncateOutput(text)}`)
+    .join('\n\n');
+  return `User request:\n${normalizedBase}\n\nPrevious tool results:\n${previousSection}`;
+}
+
+function recordPreviousOutput(outputs: string[], resultText?: string): string[] {
+  const trimmed = resultText?.trim();
+  if (!trimmed) return outputs;
+  const updated = [...outputs, trimmed];
+  return updated.slice(-MAX_PREVIOUS_OUTPUTS);
+}
+
 export class Executor {
   tools: {
     chat: ChatTool;
@@ -40,12 +67,14 @@ export class Executor {
       outputs: [],
       plan,
     };
+    let previousStepOutputs: string[] = [];
 
     for (let index = 0; index < plan.length; index += 1) {
       const step = plan[index];
       const stepMeta = planSteps[index];
       const toolName = toToolName(step);
       const startedAt = Date.now();
+      const stepInputText = index === 0 ? input : buildStepInput(input, previousStepOutputs);
       if (stepMeta) {
         onProgress?.({ type: 'step:start', step: stepMeta });
       }
@@ -53,10 +82,11 @@ export class Executor {
       try {
         if (step === 'chat') {
           const result = await this.tools.chat.reply({
-            input,
+            input: stepInputText,
             history,
           });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -65,11 +95,12 @@ export class Executor {
 
         if (step === 'chat_with_image') {
           const result = await this.tools.chat.reply({
-            input,
+            input: stepInputText,
             history,
             image,
           });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -77,8 +108,9 @@ export class Executor {
         }
 
         if (step === 'web_search') {
-          const result = await this.tools.webSearch.search({ input });
+          const result = await this.tools.webSearch.search({ input: stepInputText });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -87,9 +119,10 @@ export class Executor {
 
         if (step === 'reasoning') {
           const result = await this.tools.reasoning.think({
-            input,
+            input: stepInputText,
           });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
@@ -97,8 +130,9 @@ export class Executor {
         }
 
         if (step === 'image_generate') {
-          const result = await this.tools.image.generate({ prompt: input });
+          const result = await this.tools.image.generate({ prompt: stepInputText });
           context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
             onProgress?.({ type: 'step:complete', step: stepMeta });
           }
