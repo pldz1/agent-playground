@@ -166,6 +166,9 @@ export interface Session {
   updatedAt: number;
   messages: Message[];
   status: SessionStatus;
+  preferredTool?: SessionToolPreference;
 }
 
 export type SessionStatus = 'idle' | 'running' | 'error';
+
+export type SessionToolPreference = 'auto' | ChatAgentIntentName;

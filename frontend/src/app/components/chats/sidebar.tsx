@@ -22,6 +22,27 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 
+const SESSION_STATUS_STYLES: Record<
+  Session['status'],
+  { label: string; textClass: string; indicatorClass: string }
+> = {
+  idle: {
+    label: 'Complete',
+    textClass: 'text-slate-500 dark:text-slate-400',
+    indicatorClass: 'bg-slate-400 dark:bg-slate-500',
+  },
+  running: {
+    label: 'Running',
+    textClass: 'text-amber-600 dark:text-amber-400',
+    indicatorClass: 'bg-amber-500',
+  },
+  error: {
+    label: 'Error',
+    textClass: 'text-red-600 dark:text-red-400',
+    indicatorClass: 'bg-red-500',
+  },
+};
+
 interface ChatSidebarProps {
   sessions: Session[];
   filteredSessions: Session[];
@@ -128,22 +149,24 @@ export function ChatSidebar({
         )}
 
         {sidebarState === 'results' && (
-          <div className="flex flex-col items-center justify-center space-y-3">
-            {filteredSessions.map((session) => (
-              <Card
-                key={session.id}
-                className={cn(
-                  'w-full p-4 cursor-pointer rounded-2xl border border-slate-100/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:ring-2 hover:ring-indigo-200/60 dark:hover:ring-indigo-500/40 hover:shadow-lg',
-                  currentSessionId === session.id
+          <div className="flex flex-col items-center justify-center space-y-3" style={{ maxWidth: '342px' }}>
+            {filteredSessions.map((session) => {
+              const statusStyle = SESSION_STATUS_STYLES[session.status];
+              return (
+                <Card
+                  key={session.id}
+                  className={cn(
+                    'w-full p-4 cursor-pointer rounded-2xl border border-slate-100/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:ring-2 hover:ring-indigo-200/60 dark:hover:ring-indigo-500/40 hover:shadow-lg',
+                    currentSessionId === session.id
                     ? 'border-indigo-500 shadow-lg bg-gradient-to-br from-indigo-50/80 via-white to-transparent dark:from-indigo-950/60 dark:via-slate-900/70 dark:to-transparent'
                     : '',
                 )}
                 onClick={() => onSelectSession(session.id)}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
                         {session.title || '新对话'}
                       </h3>
                       <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide leading-none px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -220,12 +243,21 @@ export function ChatSidebar({
                   <span className="font-medium text-slate-600 dark:text-slate-300">
                     {session.messages.length} messages
                   </span>
-                  <span className="text-[11px] tracking-wide uppercase text-slate-400 dark:text-slate-500">
-                    Continue chat
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide',
+                      statusStyle.textClass,
+                    )}
+                  >
+                    <span
+                      className={cn('size-2 rounded-full', statusStyle.indicatorClass)}
+                    />
+                    {statusStyle.label}
                   </span>
                 </div>
               </Card>
-            ))}
+            );
+            })}
           </div>
         )}
       </ScrollArea>

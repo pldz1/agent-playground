@@ -51,7 +51,6 @@ interface ChatAgentSectionProps {
   onOpenEditDrawer: (modelLabel: string) => void;
   onDeleteModel: (modelLabel: string) => void;
   onContextLengthChange: (value: number) => void;
-  onDefaultToolChange: (value: AppSettings['chatAgent']['defaultTool']) => void;
 }
 
 export function ChatAgentSection({
@@ -61,7 +60,6 @@ export function ChatAgentSection({
   onOpenEditDrawer,
   onDeleteModel,
   onContextLengthChange,
-  onDefaultToolChange,
 }: ChatAgentSectionProps) {
   const [routingOpen, setRoutingOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(true);
@@ -69,51 +67,6 @@ export function ChatAgentSection({
     Math.max(1, settings.chatAgent.chatContextLength || 1),
   );
   const modelKeys = Object.keys(MODEL_SELECT_COPY) as ModelSettingKey[];
-  const isToolAvailable = (key: ModelSettingKey) => {
-    const selected = settings.chatAgent[key];
-    if (!selected) return false;
-    return getEligibleModelsForSetting(key, settings.models).some(
-      (model) => model.label === selected,
-    );
-  };
-  const defaultToolOptions = [
-    {
-      value: 'auto',
-      label: 'Auto Route',
-      description: 'Let the router infer the intent.',
-      enabled: true,
-    },
-    {
-      value: 'chat',
-      label: 'Chat',
-      description: 'Direct chat response.',
-      enabled: isToolAvailable('chatModel'),
-    },
-    {
-      value: 'chat_with_image',
-      label: 'Chat with Image',
-      description: 'Chat using a provided image.',
-      enabled: isToolAvailable('visionModel'),
-    },
-    {
-      value: 'reasoning',
-      label: 'Reasoning',
-      description: 'Deep reasoning analysis.',
-      enabled: isToolAvailable('reasoningModel'),
-    },
-    {
-      value: 'web_search',
-      label: 'Web Search',
-      description: 'Search the web before responding.',
-      enabled: isToolAvailable('webSearchModel'),
-    },
-    {
-      value: 'image_generate',
-      label: 'Image Generate',
-      description: 'Generate an image from text.',
-      enabled: isToolAvailable('imageModel'),
-    },
-  ] as const;
 
   useEffect(() => {
     setContextLengthDraft(Math.max(1, settings.chatAgent.chatContextLength || 1));
@@ -177,47 +130,6 @@ export function ChatAgentSection({
                     </span>
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Default Tool Mode
-                    </Label>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Sets the default tool when starting a new chat.
-                    </p>
-                  </div>
-                  <Select
-                    value={settings.chatAgent.defaultTool}
-                    onValueChange={(value) =>
-                      onDefaultToolChange(
-                        value as AppSettings['chatAgent']['defaultTool'],
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-full sm:w-[240px] ">
-                      <SelectValue placeholder="Select a tool" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {defaultToolOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          disabled={!option.enabled}
-                        >
-                          <span className="flex flex-col gap-0.5 p-1">
-                            <span>{option.label}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {option.description}
-                            </span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Separator />
 
                 <div className="space-y-4">
                   {modelKeys.map((key, index) => {

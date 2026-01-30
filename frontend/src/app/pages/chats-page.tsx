@@ -81,20 +81,20 @@ export function ChatsPage({
 }: ChatsPageProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [sessionProgressEntries, setSessionProgressEntries] = useState<
+    Record<string, ChatProgressEntry[]>
+  >({});
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
   const [sessionToRename, setSessionToRename] = useState<Session | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [progressEntries, setProgressEntries] = useState<ChatProgressEntry[]>([]);
   const settings = useAppStore((state) => state.settings);
-  const defaultTool = settings.chatAgent.defaultTool ?? 'chat';
-  const [selectedTool, setSelectedTool] = useState<ComposerToolId>(defaultTool);
+  const defaultTool: ComposerToolId = 'chat';
   const isMobile = useIsMobile();
   const chatContextLength = useAppStore((state) => state.settings.chatAgent.chatContextLength);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
-  const progressStartTimesRef = useRef<Map<string, number>>(new Map());
+  const progressStartTimesRef = useRef<Map<string, Map<string, number>>>(new Map());
 
   useEffect(() => {
     const loaded = getSessions().sort((a, b) => b.updatedAt - a.updatedAt);
@@ -122,6 +122,22 @@ export function ChatsPage({
     () => sessions.find((session) => session.id === currentSessionId) ?? null,
     [currentSessionId, sessions],
   );
+  const currentProgressEntries = useMemo(
+    () => (currentSessionId ? sessionProgressEntries[currentSessionId] ?? [] : []),
+    [currentSessionId, sessionProgressEntries],
+  );
+
+  const clearSessionProgress = useCallback((sessionId: string) => {
+    setSessionProgressEntries((prev) => {
+      if (!prev[sessionId]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[sessionId];
+      return next;
+    });
+    progressStartTimesRef.current.delete(sessionId);
+  }, []);
 
   const toolOptions = useMemo<ComposerToolOption[]>(() => {
     const unavailableRoles = new Set<ModelRole>(configIssues.map((issue) => issue.role));
@@ -188,14 +204,20 @@ export function ChatsPage({
     settings.chatAgent.webSearchModel,
   ]);
 
-  useEffect(() => {
-    if (!toolOptions.some((option) => option.id === selectedTool)) {
-      const fallbackTool = toolOptions.some((option) => option.id === defaultTool)
-        ? defaultTool
-        : 'auto';
-      setSelectedTool(fallbackTool);
-    }
-  }, [defaultTool, toolOptions, selectedTool]);
+  const availableToolIds = useMemo(
+    () => new Set(toolOptions.map((option) => option.id)),
+    [toolOptions],
+  );
+
+  const fallbackTool = useMemo(
+    () => (availableToolIds.has(defaultTool) ? defaultTool : 'auto'),
+    [availableToolIds, defaultTool],
+  );
+
+  const selectedTool: ComposerToolId =
+    currentSession?.preferredTool && availableToolIds.has(currentSession.preferredTool)
+      ? currentSession.preferredTool
+      : fallbackTool;
 
   const filteredSessions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -240,6 +262,19 @@ export function ChatsPage({
     void saveSession(next);
   }, []);
 
+  useEffect(() => {
+    if (!currentSession) return;
+    const stored = currentSession.preferredTool;
+    const desired = stored && availableToolIds.has(stored) ? stored : fallbackTool;
+    if (stored === desired) return;
+
+    const updatedSession: Session = {
+      ...currentSession,
+      preferredTool: desired,
+    };
+    upsertSession(updatedSession);
+  }, [availableToolIds, currentSession, fallbackTool, upsertSession]);
+
   const createSession = useCallback((): Session => {
     const now = Date.now();
     const newSession: Session = {
@@ -249,6 +284,7 @@ export function ChatsPage({
       updatedAt: now,
       messages: [],
       status: 'idle',
+      preferredTool: defaultTool,
     };
     upsertSession(newSession);
     return newSession;
@@ -279,24 +315,30 @@ export function ChatsPage({
     [createSession, sessions],
   );
 
-  const handleAgentProgress = useCallback((event: ChatAgentProgressEvent) => {
-    setProgressEntries((prev) => {
+  const handleAgentProgress = useCallback((sessionId: string, event: ChatAgentProgressEvent) => {
+    setSessionProgressEntries((prev) => {
       const timestamp = Date.now();
+      const sessionEntries = prev[sessionId] ?? [];
       const progressStartTimes = progressStartTimesRef.current;
+      let sessionStartTimes = progressStartTimes.get(sessionId);
+      if (!sessionStartTimes) {
+        sessionStartTimes = new Map<string, number>();
+        progressStartTimes.set(sessionId, sessionStartTimes);
+      }
+
       const withDuration = (entry: ChatProgressEntry) => ({
         ...entry,
         duration:
-          progressStartTimes.has(entry.id) && entry.duration === undefined
-            ? timestamp - (progressStartTimes.get(entry.id) ?? timestamp)
+          sessionStartTimes.has(entry.id) && entry.duration === undefined
+            ? timestamp - (sessionStartTimes.get(entry.id) ?? timestamp)
             : entry.duration,
       });
+
       const ensureRouteEntry = (status: ChatProgressEntry['status'], detail: string) => {
-        const existing = prev.find((entry) => entry.id === ROUTE_ENTRY_ID);
+        const existing = sessionEntries.find((entry) => entry.id === ROUTE_ENTRY_ID);
         if (existing) {
-          return prev.map((entry) =>
-            entry.id === ROUTE_ENTRY_ID
-              ? withDuration({ ...entry, status, detail })
-              : entry,
+          return sessionEntries.map((entry) =>
+            entry.id === ROUTE_ENTRY_ID ? withDuration({ ...entry, status, detail }) : entry,
           );
         }
         return [
@@ -307,14 +349,16 @@ export function ChatsPage({
             detail,
             duration: status === 'success' ? 0 : undefined,
           },
-          ...prev,
+          ...sessionEntries,
         ];
       };
 
+      let nextEntries = sessionEntries;
+
       switch (event.type) {
         case 'route:start':
-          progressStartTimes.set(ROUTE_ENTRY_ID, timestamp);
-          return [
+          sessionStartTimes.set(ROUTE_ENTRY_ID, timestamp);
+          nextEntries = [
             {
               id: ROUTE_ENTRY_ID,
               label: ROUTE_LABEL,
@@ -322,6 +366,7 @@ export function ChatsPage({
               detail: 'Analyzing intent...',
             },
           ];
+          break;
         case 'route:complete': {
           const intentText =
             event.intents && event.intents.length
@@ -331,10 +376,11 @@ export function ChatsPage({
             event.useContext === undefined
               ? 'Context: auto'
               : `Context: ${event.useContext ? 'on' : 'off'}`;
-          return ensureRouteEntry('success', `${intentText} · ${contextLabel}`);
+          nextEntries = ensureRouteEntry('success', `${intentText} · ${contextLabel}`);
+          break;
         }
         case 'plan:ready': {
-          const existingIds = new Set(prev.map((entry) => entry.id));
+          const existingIds = new Set(sessionEntries.map((entry) => entry.id));
           const pendingSteps = (event.steps ?? [])
             .filter((step) => !existingIds.has(step.id))
             .map((step) => ({
@@ -343,11 +389,12 @@ export function ChatsPage({
               status: 'pending' as const,
               detail: `Waiting for execution: ${describePlan(step.tool)}`,
             }));
-          return [...prev, ...pendingSteps];
+          nextEntries = [...sessionEntries, ...pendingSteps];
+          break;
         }
         case 'step:start':
-          progressStartTimes.set(event.step.id, timestamp);
-          return prev.map((entry) =>
+          sessionStartTimes.set(event.step.id, timestamp);
+          nextEntries = sessionEntries.map((entry) =>
             entry.id === event.step.id
               ? {
                   ...entry,
@@ -357,8 +404,9 @@ export function ChatsPage({
                 }
               : entry,
           );
+          break;
         case 'step:complete':
-          return prev.map((entry) =>
+          nextEntries = sessionEntries.map((entry) =>
             entry.id === event.step.id
               ? withDuration({
                   ...entry,
@@ -367,8 +415,9 @@ export function ChatsPage({
                 })
               : entry,
           );
+          break;
         case 'step:error':
-          return prev.map((entry) =>
+          nextEntries = sessionEntries.map((entry) =>
             entry.id === event.step.id
               ? withDuration({
                   ...entry,
@@ -377,18 +426,41 @@ export function ChatsPage({
                 })
               : entry,
           );
+          break;
         case 'complete':
-          progressStartTimes.clear();
-          return prev;
+          progressStartTimes.delete(sessionId);
+          break;
         default:
-          return prev;
+          break;
       }
+
+      if (nextEntries === sessionEntries) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [sessionId]: nextEntries,
+      };
     });
   }, []);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentSessionId, currentSession?.messages.length, progressEntries.length]);
+  }, [currentSessionId, currentSession?.messages.length, currentProgressEntries.length]);
+
+  const handleToolSelect = useCallback(
+    (tool: ComposerToolId) => {
+      const targetSession = ensureSession(currentSessionId);
+      if (targetSession.preferredTool === tool) return;
+      const updatedSession: Session = {
+        ...targetSession,
+        preferredTool: tool,
+      };
+      upsertSession(updatedSession);
+    },
+    [currentSessionId, ensureSession, upsertSession],
+  );
 
   const handleSendMessage = useCallback(
     async (text: string, imageFiles?: File[]) => {
@@ -405,6 +477,10 @@ export function ChatsPage({
 
       const targetSession = ensureSession(currentSessionId);
       setCurrentSessionId(targetSession.id);
+      const sessionTool =
+        targetSession.preferredTool && availableToolIds.has(targetSession.preferredTool)
+          ? targetSession.preferredTool
+          : fallbackTool;
 
       let imageData: string[] | undefined;
       if (imageFiles && imageFiles.length > 0) {
@@ -434,9 +510,7 @@ export function ChatsPage({
       };
 
       upsertSession(sessionAfterUser);
-      setIsProcessing(true);
-      setProgressEntries([]);
-      progressStartTimesRef.current.clear();
+      clearSessionProgress(sessionAfterUser.id);
 
       const historyLimit = Math.max(0, chatContextLength);
       const precedingMessages =
@@ -469,12 +543,12 @@ export function ChatsPage({
       const historyInput = history.length > 0 ? history : undefined;
 
       try {
-        const intents = selectedTool !== 'auto' ? [selectedTool] : undefined;
+        const intents = sessionTool !== 'auto' ? [sessionTool] : undefined;
         const result = await chatAgent.handle({
           text,
           image: imageData,
           history: historyInput,
-          onProgress: handleAgentProgress,
+          onProgress: (event) => handleAgentProgress(sessionAfterUser.id, event),
           intents,
         });
 
@@ -508,24 +582,25 @@ export function ChatsPage({
         upsertSession(sessionWithError);
         toast.error('Execution failed', { description: message });
       } finally {
-        setIsProcessing(false);
-        setProgressEntries([]);
-        progressStartTimesRef.current.clear();
+        clearSessionProgress(sessionAfterUser.id);
       }
     },
     [
+      availableToolIds,
+      fallbackTool,
+      clearSessionProgress,
       chatContextLength,
       currentSessionId,
       ensureSession,
       handleAgentProgress,
       isModelConfigured,
-      selectedTool,
       upsertSession,
     ],
   );
 
   const handleDeleteCurrentSession = useCallback(() => {
     if (!sessionToDelete) return;
+    clearSessionProgress(sessionToDelete.id);
     void deleteSession(sessionToDelete.id);
     setSessions((prev) => prev.filter((session) => session.id !== sessionToDelete.id));
     setSessionToDelete(null);
@@ -535,7 +610,7 @@ export function ChatsPage({
         : prev,
     );
     toast.success('Chat deleted');
-  }, [sessionToDelete, sessions]);
+  }, [clearSessionProgress, sessionToDelete, sessions]);
 
   const handleSelectSession = useCallback(
     (sessionId: string) => {
@@ -601,8 +676,9 @@ export function ChatsPage({
   const showConfigBanner = !isModelConfigured;
   const showDebugDetails = showConfigBanner && debugMode && debugLines.length > 0;
   const composerPlaceholder = isModelConfigured ? DEFAULT_PLACEHOLDER : CONFIG_PLACEHOLDER;
-  const isComposerDisabled = !isModelConfigured || isProcessing;
-  const newSessionDisabled = !isModelConfigured || isProcessing;
+  const isCurrentSessionProcessing = currentSession?.status === 'running';
+  const isComposerDisabled = !isModelConfigured || isCurrentSessionProcessing;
+  const newSessionDisabled = !isModelConfigured;
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
   }, []);
@@ -636,15 +712,15 @@ export function ChatsPage({
             showDebugDetails={showDebugDetails}
             debugLines={debugLines}
             onNavigateToModels={onNavigateToModels}
-            isProcessing={isProcessing}
-            progressEntries={progressEntries}
+            isProcessing={isCurrentSessionProcessing}
+            progressEntries={currentProgressEntries}
             messageEndRef={messageEndRef}
             onSendMessage={handleSendMessage}
             isComposerDisabled={isComposerDisabled}
             composerPlaceholder={composerPlaceholder}
             toolOptions={toolOptions}
             selectedTool={selectedTool}
-            onToolSelect={setSelectedTool}
+            onToolSelect={handleToolSelect}
           />
         ) : (
           <ChatEmptyState

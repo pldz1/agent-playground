@@ -36,8 +36,19 @@ export class WebSearchTool {
         durationMs: duration,
       });
 
+      const messageOutput = response.output.find((item) => item.type === 'message');
+      const textPart = messageOutput?.content?.find((part) => part.type === 'output_text');
+      const text = typeof textPart?.text === 'string' ? textPart.text : '';
+
+      if (!text) {
+        logger.warn('WebSearchTool.search:empty-response', {
+          modelName,
+          outputLength: response.output.length,
+        });
+      }
+
       return {
-        text: response.output[1].content[0].text,
+        text,
         raw: response,
       };
     } catch (error) {

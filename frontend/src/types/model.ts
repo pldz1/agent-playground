@@ -15,7 +15,6 @@ export interface ModelConfig {
 }
 
 export interface ChatAgentSettings {
-  defaultTool: 'auto' | 'chat' | 'chat_with_image' | 'reasoning' | 'web_search' | 'image_generate';
   routingModel: string;
   chatModel: string;
   webSearchModel: string;

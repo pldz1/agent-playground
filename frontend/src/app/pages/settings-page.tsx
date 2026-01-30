@@ -260,9 +260,6 @@ export function SettingsPage({ onSettingsChange, theme, onThemeChange }: Setting
                 onContextLengthChange={(value) =>
                   handleChatAgentSettingChange('chatContextLength', value)
                 }
-                onDefaultToolChange={(value) =>
-                  handleChatAgentSettingChange('defaultTool', value)
-                }
               />
             )}
 
