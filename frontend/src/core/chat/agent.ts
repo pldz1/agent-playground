@@ -158,6 +158,7 @@ export class ChatAgentCore {
         type: 'route:complete',
         intents: routing.intents,
         useContext: routing.useContext,
+        raw: routing.raw,
       });
       const historyInput = routing.useContext
         ? history
@@ -230,6 +231,8 @@ export class ChatAgent {
         intents: intents.map((name) => ({ name, confidence: 1 })),
         duration: result.routing.duration,
         useContext: result.routing.useContext,
+        raw: result.routing.raw,
+        model: result.routing.model,
       },
       plan: buildPlanSteps(plan),
       toolOutputs: outputs.map((output, index) => toToolOutput({ output, index })),

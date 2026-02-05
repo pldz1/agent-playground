@@ -85,10 +85,11 @@ export class Executor {
             input: stepInputText,
             history,
           });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          const outputRecord = { step: toolName, result, duration: Date.now() - startedAt };
+          context.outputs.push(outputRecord);
           previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta, output: outputRecord });
           }
           continue;
         }
@@ -99,20 +100,22 @@ export class Executor {
             history,
             image,
           });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          const outputRecord = { step: toolName, result, duration: Date.now() - startedAt };
+          context.outputs.push(outputRecord);
           previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta, output: outputRecord });
           }
           continue;
         }
 
         if (step === 'web_search') {
           const result = await this.tools.webSearch.search({ input: stepInputText });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          const outputRecord = { step: toolName, result, duration: Date.now() - startedAt };
+          context.outputs.push(outputRecord);
           previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta, output: outputRecord });
           }
           continue;
         }
@@ -121,38 +124,43 @@ export class Executor {
           const result = await this.tools.reasoning.think({
             input: stepInputText,
           });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          const outputRecord = { step: toolName, result, duration: Date.now() - startedAt };
+          context.outputs.push(outputRecord);
           previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta, output: outputRecord });
           }
           continue;
         }
 
         if (step === 'image_generate') {
           const result = await this.tools.image.generate({ prompt: stepInputText });
-          context.outputs.push({ step: toolName, result, duration: Date.now() - startedAt });
+          const outputRecord = { step: toolName, result, duration: Date.now() - startedAt };
+          context.outputs.push(outputRecord);
           previousStepOutputs = recordPreviousOutput(previousStepOutputs, result.text);
           if (stepMeta) {
-            onProgress?.({ type: 'step:complete', step: stepMeta });
+            onProgress?.({ type: 'step:complete', step: stepMeta, output: outputRecord });
           }
           continue;
         }
 
         const unknownMessage = `Unknown step: ${step}`;
-        context.outputs.push({ step: toolName, error: unknownMessage, duration: Date.now() - startedAt });
+        const errorRecord = { step: toolName, error: unknownMessage, duration: Date.now() - startedAt };
+        context.outputs.push(errorRecord);
         if (stepMeta) {
           onProgress?.({
             type: 'step:error',
             step: stepMeta,
             error: unknownMessage,
+            output: errorRecord,
           });
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        context.outputs.push({ step: toolName, error: message, duration: Date.now() - startedAt });
+        const errorRecord = { step: toolName, error: message, duration: Date.now() - startedAt };
+        context.outputs.push(errorRecord);
         if (stepMeta) {
-          onProgress?.({ type: 'step:error', step: stepMeta, error: message });
+          onProgress?.({ type: 'step:error', step: stepMeta, error: message, output: errorRecord });
         }
         throw error;
       }

@@ -20,6 +20,8 @@ export interface ChatAgentRouting {
   intents: ChatAgentIntent[];
   duration?: number;
   useContext?: boolean;
+  raw?: unknown;
+  model?: string;
 }
 
 export interface ChatAgentPlanStep {
@@ -68,11 +70,25 @@ export interface ChatAgentPlanProgressStep {
 
 export type ChatAgentProgressEvent =
   | { type: 'route:start' }
-  | { type: 'route:complete'; intents: ChatAgentIntentName[]; useContext?: boolean }
+  | {
+      type: 'route:complete';
+      intents: ChatAgentIntentName[];
+      useContext?: boolean;
+      raw?: unknown;
+    }
   | { type: 'plan:ready'; steps: ChatAgentPlanProgressStep[] }
   | { type: 'step:start'; step: ChatAgentPlanProgressStep }
-  | { type: 'step:complete'; step: ChatAgentPlanProgressStep }
-  | { type: 'step:error'; step: ChatAgentPlanProgressStep; error: string }
+  | {
+      type: 'step:complete';
+      step: ChatAgentPlanProgressStep;
+      output?: ChatAgentToolRunOutput;
+    }
+  | {
+      type: 'step:error';
+      step: ChatAgentPlanProgressStep;
+      error: string;
+      output?: ChatAgentToolRunOutput;
+    }
   | { type: 'complete' };
 
 export interface ChatAgentImageInput {

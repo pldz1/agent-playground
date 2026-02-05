@@ -44,6 +44,11 @@ export function ChatSessionView({
   selectedTool,
   onToolSelect,
 }: ChatSessionViewProps) {
+  const lastAssistantMessageId = currentSession.messages.reduce<string | null>(
+    (acc, message) => (message.role === 'assistant' ? message.id : acc),
+    null,
+  );
+
   return (
     <>
       <div className="flex-1 overflow-hidden">
@@ -58,13 +63,29 @@ export function ChatSessionView({
             )}
             {currentSession.messages.length ? (
               currentSession.messages.map((message) => (
-                <MessageCard key={message.id} message={message} debugMode={debugMode} />
+                <MessageCard
+                  key={message.id}
+                  message={message}
+                  debugMode={debugMode}
+                  progressPersistKey={
+                    debugMode &&
+                    message.role === 'assistant' &&
+                    message.id === lastAssistantMessageId &&
+                    currentSession
+                      ? `session-${currentSession.id}`
+                      : undefined
+                  }
+                />
               ))
             ) : (
               <EmptyMessagesPlaceholder />
             )}
             {isProcessing && progressEntries.length > 0 && (
-              <ChatProgress entries={progressEntries} />
+              <ChatProgress
+                entries={progressEntries}
+                collapsedLabel="Show agent task details"
+                persistKey={currentSession ? `session-${currentSession.id}` : undefined}
+              />
             )}
           </div>
           <div ref={messageEndRef} className="h-0" />

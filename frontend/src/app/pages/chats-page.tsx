@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback, FormEvent, useRef } from 're
 import { chatAgent } from '@/core';
 import { getSessions, saveSession, deleteSession, renameSession, useAppStore } from '@/store';
 import { exportSessionAsJSON, exportSessionAsMarkdown } from '../helpers/export';
+import { stringifySafe } from '../helpers/sanitize';
 import type {
   ChatAgentHistoryMessage,
   ChatAgentProgressEvent,
@@ -334,11 +335,23 @@ export function ChatsPage({
             : entry.duration,
       });
 
-      const ensureRouteEntry = (status: ChatProgressEntry['status'], detail: string) => {
+      const ensureRouteEntry = (
+        status: ChatProgressEntry['status'],
+        detail: string,
+        rawData?: string,
+      ) => {
         const existing = sessionEntries.find((entry) => entry.id === ROUTE_ENTRY_ID);
         if (existing) {
           return sessionEntries.map((entry) =>
-            entry.id === ROUTE_ENTRY_ID ? withDuration({ ...entry, status, detail }) : entry,
+            entry.id === ROUTE_ENTRY_ID
+              ? withDuration({
+                  ...entry,
+                  status,
+                  detail,
+                  rawData: rawData ?? entry.rawData,
+                  rawLabel: rawData ? 'View raw' : entry.rawLabel,
+                })
+              : entry,
           );
         }
         return [
@@ -348,6 +361,8 @@ export function ChatsPage({
             status,
             detail,
             duration: status === 'success' ? 0 : undefined,
+            rawData,
+            rawLabel: rawData ? 'View raw' : undefined,
           },
           ...sessionEntries,
         ];
@@ -376,7 +391,10 @@ export function ChatsPage({
             event.useContext === undefined
               ? 'Context: auto'
               : `Context: ${event.useContext ? 'on' : 'off'}`;
-          nextEntries = ensureRouteEntry('success', `${intentText} · ${contextLabel}`);
+          const rawData =
+            stringifySafe(event.raw) ??
+            stringifySafe({ intents: event.intents, useContext: event.useContext });
+          nextEntries = ensureRouteEntry('success', `${intentText} · ${contextLabel}`, rawData);
           break;
         }
         case 'plan:ready': {
@@ -401,6 +419,7 @@ export function ChatsPage({
                   status: 'running',
                   detail: `${describePlan(event.step.tool)} ...`,
                   duration: undefined,
+                  rawData: undefined,
                 }
               : entry,
           );
@@ -412,6 +431,8 @@ export function ChatsPage({
                   ...entry,
                   status: 'success',
                   detail: `${describePlan(event.step.tool)} completed.`,
+                  rawData: stringifySafe(event.output),
+                  rawLabel: event.output ? 'View raw' : entry.rawLabel,
                 })
               : entry,
           );
@@ -423,6 +444,8 @@ export function ChatsPage({
                   ...entry,
                   status: 'fail',
                   detail: event.error,
+                  rawData: stringifySafe(event.output) ?? entry.rawData,
+                  rawLabel: event.output ? 'View raw' : entry.rawLabel,
                 })
               : entry,
           );
@@ -581,8 +604,6 @@ export function ChatsPage({
 
         upsertSession(sessionWithError);
         toast.error('Execution failed', { description: message });
-      } finally {
-        clearSessionProgress(sessionAfterUser.id);
       }
     },
     [
