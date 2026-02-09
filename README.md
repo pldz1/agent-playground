@@ -1,24 +1,39 @@
 # Agent Playground
 
-Agent Playground is a **local-first AI Agent desktop app**. The frontend is built with Vite + React, while the desktop wrapper uses Python + FastAPI + PyWebView to serve the static UI and launch a native window.
+Agent Playground is a local-first multi-tool AI agent desktop application. The UI is built with Vite + React 19 + TypeScript, and the desktop shell uses FastAPI + PyWebView to host the compiled UI inside a native window. It is designed for experimenting with routing, tool orchestration, and execution plans without relying on any cloud-hosted backend.
 
-## Highlights
+## Table of Contents
+- [Features](#features)
+- [Architecture](#architecture)
+  - [System Architecture](#system-architecture)
+  - [Agent Execution Flow](#agent-execution-flow)
+  - [Desktop Boot Flow](#desktop-boot-flow)
+- [Repository Layout](#repository-layout)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+  - [Frontend Development](#1-frontend-development)
+  - [Build Frontend Assets](#2-build-frontend-assets)
+  - [Desktop Runtime](#3-desktop-runtime)
+  - [Package the Desktop App](#4-package-the-desktop-app)
+- [Configuration](#configuration)
+- [Data Storage](#data-storage)
+- [Available Scripts](#available-scripts)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-- Multi-tool routing: auto-selects `chat / chat_with_image / webSearch / reasoning / image_generate`
-- Execution plan & progress: UI renders route, plan steps, and tool status
-- Image generation & understanding
-- Multi-session management: search, rename, delete
-- Config center: model settings, capability checks, debug mode
-- Local storage: settings and sessions stored in IndexedDB
+## Features
 
-## Tech Stack
+- **Local-first desktop experience**: Everything runs on your machine. PyWebView serves the bundled UI through a FastAPI server and stores IndexedDB data alongside the app.
+- **Multi-tool routing and execution**: The router decides between `chat`, `chat_with_image`, `web_search`, `reasoning`, and `image_generate`; the executor normalizes the plan, streams progress, and stitches the final answer.
+- **Step-by-step visibility**: The UI shows routing decisions, execution plans, tool progress, and outputs so you can debug the agent loop in real time.
+- **Image understanding & generation**: Inline data URLs are parsed, routed to `chat_with_image`, and generation is handled through the image tool.
+- **Multi-session workspace**: Search, rename, delete, or favorite sessions. Everything is persisted in IndexedDB with graceful fallback to in-memory storage.
+- **Config center**: Configure provider base URLs, API keys, capability checks, and model roles without editing source code.
+- **Packaging-ready**: `desktop/app.py` loads `.env`, starts FastAPI + PyWebView, and can be frozen with PyInstaller via `desktop/app.spec`.
 
-- Frontend: Vite + React 19 + TypeScript + Tailwind CSS + MUI + Radix UI
-- State: Zustand
-- Desktop: FastAPI + Uvicorn + PyWebView
-- Packaging: PyInstaller
+## Architecture
 
-## System Architecture
+### System Architecture
 
 ```mermaid
 flowchart LR
@@ -51,7 +66,7 @@ flowchart LR
     API --> WebView
 ```
 
-## Agent Execution Flow
+### Agent Execution Flow
 
 ```mermaid
 sequenceDiagram
@@ -77,7 +92,7 @@ sequenceDiagram
     Agent-->>UI: answer + images + plan
 ```
 
-## Desktop Boot Flow
+### Desktop Boot Flow
 
 ```mermaid
 flowchart TD
@@ -87,33 +102,38 @@ flowchart TD
     FastAPI --> WebView[PyWebView opens local URL]
 ```
 
-## Repository Structure
+## Repository Layout
 
 ```
 .
-├── agent.md               # AI engineering/agent design notes
-├── README.md
+├── AGENT.md               # Agent usage instructions for this workspace
+├── LICENSE                # Apache-2.0 license text
+├── README.md              # You are here
 ├── desktop
-│   ├── app.py             # FastAPI + PyWebView entrypoint
-│   ├── app.spec           # PyInstaller config
-│   └── dist               # Copied frontend build output
+│   ├── app.py             # FastAPI + PyWebView entrypoint (.env-aware)
+│   ├── app.spec           # PyInstaller configuration
+│   └── requirements.txt   # Minimal runtime dependencies
 └── frontend
+    ├── package.json       # Vite + React application scripts/deps
     ├── src
-    │   ├── app            # Pages and components
-    │   ├── core           # Agent core logic
-    │   ├── store          # Zustand + IndexedDB
-    │   └── types          # TypeScript types
+    │   ├── app            # Screens, composer, panels
+    │   ├── core           # Agent, router, executor, prompts, tools
+    │   ├── store          # Zustand store + IndexedDB helpers
+    │   └── types          # Shared TypeScript types
+    ├── public             # Static assets served by Vite
     └── vite.config.ts
 ```
 
-## Quick Start
+## Requirements
 
-### 1) Prerequisites
-
-- Node.js 18+ (20+ recommended)
+- Node.js 18+ (20+ recommended) and npm
 - Python 3.10+
+- `pip` for installing desktop dependencies
+- Optional: PyInstaller (only needed for packaging)
 
-### 2) Frontend Dev Mode
+## Getting Started
+
+### 1) Frontend Development
 
 ```bash
 cd frontend
@@ -121,61 +141,97 @@ npm install
 npm run dev
 ```
 
-### 3) Build Web Assets (Required for desktop)
+The Vite dev server hot-reloads UI changes and proxies API calls directly from the browser (no desktop layer needed).
+
+### 2) Build Frontend Assets
 
 ```bash
 cd frontend
 npm run build
 ```
 
-Copy `frontend/dist` to `desktop/dist`.
+Copy the generated `frontend/dist` directory into `desktop/dist`. Symlinks also work during development if your OS supports them.
 
-### 4) Run Desktop App
+### 3) Desktop Runtime
 
-Install Python dependencies in `desktop` (example):
+1. Install dependencies:
+   ```bash
+   cd desktop
+   python -m venv .venv && source .venv/bin/activate   # optional but recommended
+   pip install -r requirements.txt
+   pip install python-dotenv
+   ```
+2. Create `.env` in the repository root (next to `desktop/`) so `desktop/app.py` can load it:
+   ```bash
+   DESKTOP_APP_HOST=127.0.0.1
+   DESKTOP_APP_PORT=10088
+   ```
+3. Run the desktop app:
+   ```bash
+   python desktop/app.py
+   ```
 
-```bash
-pip install fastapi uvicorn pywebview python-dotenv
-```
+FastAPI serves `desktop/dist`, and PyWebView opens `http://<DESKTOP_APP_HOST>:<DESKTOP_APP_PORT>` inside a native window. Windows-specific console tweaks and safe `window.open` overrides are applied automatically.
 
-Create `.env`:
-
-```bash
-DESKTOP_APP_HOST='127.0.0.1'
-DESKTOP_APP_PORT=10088
-```
-
-Start the desktop app:
-
-```bash
-cd desktop
-python app.py
-```
-
-### 5) Package (Optional)
+### 4) Package the Desktop App
 
 ```bash
 cd desktop
 pyinstaller app.spec
 ```
 
-## Model Configuration
+The spec file bundles FastAPI, PyWebView, and the pre-built static assets. Ensure `desktop/dist` already contains the latest build before packaging.
 
-Configure models in Settings with API Key and Base URL.
+## Configuration
 
-- Required roles: `chat` and `routing`
-- Optional capabilities: `vision`, `webSearch`, `reasoning`, `image`
-- `chatContextLength` controls history length passed to tools
+### Desktop `.env`
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `DESKTOP_APP_HOST` | Address FastAPI binds to. Use `0.0.0.0` to expose beyond localhost. | `127.0.0.1` |
+| `DESKTOP_APP_PORT` | Port for the static server + PyWebView target. | `10088` |
+
+### In-app Settings
+
+Open **Config Center** in the UI to set model credentials and behavior:
+
+- Base URL + API key per provider role (`chat`, `routing`)
+- Capability toggles for `vision`, `webSearch`, `reasoning`, and `image`
+- Chat context length and per-session tool preferences
+- Debug mode to expose low-level routing payloads
+
+Settings are stored locally (no backend), so you can maintain different API keys per machine without touching source code.
 
 ## Data Storage
 
-- Settings and sessions are stored in IndexedDB (`ai_agent_settings` / `ai_agent_sessions`)
-- Memory fallback is used when IndexedDB is unavailable
+- Sessions and settings live in IndexedDB (`ai_agent_sessions`, `ai_agent_settings`).
+- The Zustand store loads from IndexedDB at startup (`frontend/src/store/store.ts`).
+- If IndexedDB is unavailable (e.g., private WebView modes), the store falls back to an in-memory cache.
+- PyWebView writes Chromium data (including IndexedDB) to `desktop/app_data`, which can be deleted to reset local data.
 
-## Key Entry Points
+## Available Scripts
 
-- `frontend/src/core/chat/agent.ts`: Agent aggregation/output
-- `frontend/src/core/chat/router.ts`: Intent routing
-- `frontend/src/core/chat/executor.ts`: Plan execution and progress
-- `frontend/src/core/tools`: Tool implementations
-- `desktop/app.py`: Desktop startup
+### Frontend (`frontend/package.json`)
+
+- `npm run dev` – Start Vite in development mode.
+- `npm run build` – Produce production assets under `frontend/dist`.
+- `npm run preview` – Preview the production build locally.
+- `npm run format` – Run Prettier across the project.
+
+### Desktop
+
+- `pip install -r desktop/requirements.txt && pip install python-dotenv` – Install FastAPI, Uvicorn, PyWebView, PyInstaller, and load `.env` files for the desktop shell.
+- `python desktop/app.py` – Launch the local desktop shell (requires `desktop/dist`).
+- `pyinstaller desktop/app.spec` – Package the desktop app for distribution.
+
+## Troubleshooting
+
+- **Blank desktop window**: Ensure `desktop/dist` exists and contains the latest Vite build; FastAPI will 404 if the folder is missing.
+- **Stale UI after rebuilds**: Delete `desktop/dist`, copy the new `frontend/dist`, and relaunch. Cached assets may persist otherwise.
+- **IndexedDB errors**: Remove the `desktop/app_data` directory to reset storage. The app will recreate it on the next launch.
+- **Port already in use**: Update `DESKTOP_APP_PORT` in `.env` and restart `desktop/app.py` so PyWebView points to the new port.
+- **External links do not open**: `desktop/app.py` overrides `window.open` via PyWebView's JS bridge. Make sure the desktop window logs “window.open 已被重写” after load. If not, restart the app.
+
+## License
+
+Agent Playground is distributed under the [Apache License 2.0](LICENSE).
